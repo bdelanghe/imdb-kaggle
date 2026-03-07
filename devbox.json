@@ -10,7 +10,6 @@
   },
   "commands": {
     "install-requirements": "python3 -m pip install -r requirements.txt",
-    "load-tmdb": "python3 scripts/load_tmdb.py",
     "notebook": "jupyter notebook"
   }
 }
