@@ -1,4 +1,6 @@
-# IMDb Kaggle Dataset
+# tmdb-nrc-emotional-intensity-movie-keywords
+
+A dataset pipeline that combines the TMDB movie dataset with the NRC Emotional Intensity Lexicon to produce emotion-scored keyword features per movie. The output is a Kaggle dataset of movie keywords annotated with NRC emotional intensity scores, suitable for sentiment analysis and recommendation research.
 
 ## Setup
 
