@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.11"
+  ],
+  "shell": {
+    "init_hook": [
+      "[ -f .env ] && set -a && source .env && set +a"
+    ]
+  },
+  "commands": {
+    "install-requirements": "python3 -m pip install -r requirements.txt",
+    "load-tmdb": "python3 scripts/load_tmdb.py",
+    "notebook": "jupyter notebook"
+  }
+}
