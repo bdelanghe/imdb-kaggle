@@ -13,14 +13,13 @@ Use [Devbox](https://www.jetpack.io/devbox/) for a consistent environment (Pytho
    ```bash
    devbox run install-requirements   # once: installs deps into devbox env
    ```
-2. **Load TMDb dataset:**  
-   `devbox run load-tmdb` (add flags like `-- --nrows 10`).
+2. **Load TMDb dataset:** open and run `load_tmdb.ipynb` (see “Running a Python notebook” below).
 3. **Jupyter in the browser:**  
    `devbox run notebook`.
 4. **Interactive shell with env:**  
-   `devbox shell` then run `python3 scripts/load_tmdb.py`, `jupyter notebook`, or open `load_tmdb.ipynb` with a kernel that uses the devbox Python (see below).
+   `devbox shell` then run `jupyter notebook` or open `load_tmdb.ipynb` with a kernel that uses the devbox Python (see below).
 
-The script and the notebook both load `.env` so `KAGGLE_API_TOKEN` is used when you run from the repo root.
+The notebook loads `.env` so `KAGGLE_API_TOKEN` is used when you run from the repo root.
 
 ## Running a Python notebook
 
@@ -39,10 +38,9 @@ The script and the notebook both load `.env` so `KAGGLE_API_TOKEN` is used when 
 2. In Cursor, set the Python interpreter to `${workspaceFolder}/.venv/bin/python` (or reload the window so it picks up `.vscode/settings.json`).
 3. Open `load_tmdb.ipynb` and run cells; the notebook loads `.env` for Kaggle.
 
-## Loading the TMDb dataset (CLI)
+## Loading the TMDb dataset
 
-- **With devbox:** `devbox run load-tmdb` (optional: `devbox run load-tmdb -- --nrows 5 --dataset owner/slug`).
-- **Without devbox:** `python3 scripts/load_tmdb.py` (from repo root; script loads `.env`).
+Open and run `load_tmdb.ipynb`. Set `NROWS` in the first code cell to limit rows (e.g. `10_000`) or `None` for the full dataset. The notebook loads `.env` for Kaggle credentials.
 
 ## NRC Emotion Lexicon
 
