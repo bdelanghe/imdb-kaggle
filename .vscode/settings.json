@@ -1,0 +1,30 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "jupyter.kernels.excludePythonEnvironments": [],
+
+  "ipub.outputDir": "${workspaceFolder}/output",
+  "ipub.exportFormat": "html",
+  "ipub.openAfterExport": true,
+
+  "terminal.integrated.defaultProfile.osx": "devbox",
+  "terminal.integrated.defaultProfile.linux": "devbox",
+  "terminal.integrated.defaultProfile.windows": "devbox",
+  "terminal.integrated.profiles.osx": {
+    "devbox": {
+      "path": "devbox",
+      "args": ["shell", "--", "zsh", "-l"]
+    }
+  },
+  "terminal.integrated.profiles.linux": {
+    "devbox": {
+      "path": "devbox",
+      "args": ["shell", "--", "bash", "-l"]
+    }
+  },
+  "terminal.integrated.profiles.windows": {
+    "devbox": {
+      "path": "devbox",
+      "args": ["shell", "--", "pwsh", "-NoLogo", "-Login"]
+    }
+  }
+}
