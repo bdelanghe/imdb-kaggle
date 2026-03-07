@@ -1,0 +1,6 @@
+# Beads Configuration for imdb-kaggle
+issue-prefix: "imdb"
+json: true
+no-daemon: false
+auto-start-daemon: false
+sync-branch: "beads-sync"
