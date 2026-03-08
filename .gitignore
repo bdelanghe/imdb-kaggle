@@ -8,3 +8,10 @@ data/
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# Large output files — Kaggle is the source of truth
+# https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores
+output/*.csv
+output/*.zip
+
+# dataset-metadata.json is tracked (defines schema + column descriptions)

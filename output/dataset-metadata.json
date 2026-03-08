@@ -1,8 +1,8 @@
 {
   "title": "TMDB Movie VAD + Emotion Intensity Scores",
   "id": "bdelanghe/tmdb-movie-vad-emotion-scores",
-  "subtitle": "1.38M movies with NRC valence, arousal, dominance and 8-emotion intensity scores from plot keywords",
-  "description": "## TMDB Movie Emotional Feature Matrix\n\nAll 24 original TMDB columns (~1.38M movies) enriched with affective scores derived from movie keywords using NRC lexicons by Saif M. Mohammad (National Research Council Canada).\n\n### Scored Columns (12 added)\n\n| Column | Source | Description |\n|--------|--------|-------------|\n| sentiment | derived | positive / negative / neutral / unknown |\n| valence | NRC VAD | positivity of keyword associations (0\u20131) |\n| arousal | NRC VAD | energy/activation level (0\u20131) |\n| dominance | NRC VAD | sense of control/power (0\u20131) |\n| anger \u2026 trust | NRC Intensity | mean emotion intensity across keywords (0\u20131) |\n\n### Pipeline\n\n```\nTMDB keywords \u2192 tokenize on spaces/hyphens\n             \u2192 lemmatize (NLTK, noun/verb/adj POS)\n             \u2192 NRC lexicon lookup (first matching lemma)\n             \u2192 average matched token scores per keyword\n             \u2192 average keyword scores per movie\n```\n\nSource code: https://github.com/bdelanghe/imdb-kaggle\n\n### Lexicon Sources\n\n- NRC Emotion Lexicon (binary): https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm\n- NRC Emotion Intensity Lexicon (continuous): https://saifmohammad.com/WebPages/AffectIntensity.htm\n- NRC VAD Lexicon (valence/arousal/dominance): https://saifmohammad.com/WebPages/nrc-vad.html\n- Full NRC lexicon index: https://saifmohammad.com/WebPages/lexicons.html\n\n### Methodological Notes\n\nScores represent **perceived emotional word associations**, not ground-truth movie sentiment (Mohammad, 2020 \u2014 Practical and Ethical Considerations in the Effective use of Emotion and Sentiment Lexicons).\n\nKey caveats:\n- **Scores are relative** \u2014 valence 0.7 means \"more positive than 0.6\", not \"70% positive\"\n- **Association \u2260 denotation** \u2014 \"party\" associates with joy but does not mean joy\n- **Dominant sense bias** \u2014 film-industry terms (shot, cut, cast) may carry non-cinematic scores\n- **Coverage** \u2014 ~75% of rows have no TMDB keywords and are scored as unknown\n\nCorrect interpretation: *\"Movies with these keywords contain more joy-associated language\"* \u2014 not *\"this movie is joyful.\"*\n\n### Future Work / Related Lexicons\n\n- Warriner VAD (13,915 lemmas) \u2014 strong human-rated validation source for NRC VAD\n- ANEW \u2014 classic VAD norms (~1,000 words)\n- LIWC \u2014 category-based psycholinguistic features (anger, social, power, death\u2026)\n- SenticNet \u2014 concept-level sentiment for multi-word phrases\n- MovieLens Tag Genome \u2014 semantic movie tags with relevance scores",
+  "subtitle": "NRC VAD + emotion intensity for 1.38M TMDB movies",
+  "description": "## TMDB Movie Emotional Feature Matrix\n\nAll 24 original TMDB columns (~1.38M movies) enriched with 12 affective scores derived from movie keywords using NRC lexicons by Saif M. Mohammad (National Research Council Canada).\n\n### Scored Columns\n\n| Column | Source | Description |\n|--------|--------|-------------|\n| sentiment | derived | positive / negative / neutral / unknown |\n| valence | NRC VAD | positivity of keyword associations (0\u20131) |\n| arousal | NRC VAD | energy/activation level (0\u20131) |\n| dominance | NRC VAD | sense of control/power (0\u20131) |\n| anger \u2026 trust | NRC Intensity | mean emotion intensity across keywords (0\u20131) |\n\nColumn order: identity (id, title, keywords) \u2192 emotion scores \u2192 remaining TMDB metadata.\n\n### Pipeline\n\n```\nTMDB keywords \u2192 tokenize \u2192 lemmatize (NLTK noun/verb/adj) \u2192 NRC lookup \u2192 average per movie\n```\n\nSource: https://github.com/bdelanghe/imdb-kaggle\n\n### Lexicon Sources\n\n- NRC Emotion Lexicon: https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm\n- NRC Emotion Intensity Lexicon: https://saifmohammad.com/WebPages/AffectIntensity.htm\n- NRC VAD Lexicon: https://saifmohammad.com/WebPages/nrc-vad.html\n- All NRC lexicons: https://saifmohammad.com/WebPages/lexicons.html\n\n### Methodological Notes (Mohammad, 2020)\n\nScores represent **perceived emotional word associations** \u2014 not ground-truth movie sentiment.\n- Scores are relative, not absolute (valence 0.7 = \"more positive than 0.6\", not \"70% positive\")\n- Association \u2260 denotation (\"party\" associates with joy but does not mean joy)\n- ~75% of rows have no TMDB keywords and are scored as unknown\n\nCorrect: *\"Movies with these keywords contain more joy-associated language\"* \u2014 not *\"this movie is joyful.\"*\n\n### Future Work\n\nWarriner VAD \u00b7 ANEW \u00b7 LIWC \u00b7 SenticNet \u00b7 MovieLens Tag Genome",
   "isPrivate": false,
   "licenses": [
     {
@@ -11,20 +11,71 @@
   ],
   "keywords": [
     "movies and tv shows",
-    "natural language processing",
-    "sentiment analysis",
     "text mining",
-    "psychology"
+    "psychology",
+    "nlp",
+    "classification",
+    "feature engineering",
+    "languages",
+    "linguistics"
   ],
   "resources": [
     {
       "path": "movie_vad_scores.csv",
-      "description": "All 24 original TMDB columns plus 12 emotion/VAD scores derived from movie keywords via NRC lexicons. One row per movie.",
+      "description": "1.38M TMDB movies \u2014 all 24 original columns plus 12 NRC emotion/VAD scores. Column order: id, title, keywords, emotion scores, then remaining TMDB metadata.",
       "schema": {
         "fields": [
           {
+            "name": "sentiment",
+            "description": "Derived label: positive (valence>0.5), negative (valence<0.5), neutral, unknown (no keywords)"
+          },
+          {
+            "name": "valence",
+            "description": "NRC VAD: mean keyword valence (0=negative, 1=positive). Relative \u2014 higher means more positive-associated."
+          },
+          {
+            "name": "arousal",
+            "description": "NRC VAD: mean keyword arousal (0=calm, 1=excited)"
+          },
+          {
+            "name": "dominance",
+            "description": "NRC VAD: mean keyword dominance (0=submissive, 1=powerful)"
+          },
+          {
+            "name": "anger",
+            "description": "NRC Intensity: mean anger intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "anticipation",
+            "description": "NRC Intensity: mean anticipation intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "disgust",
+            "description": "NRC Intensity: mean disgust intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "fear",
+            "description": "NRC Intensity: mean fear intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "joy",
+            "description": "NRC Intensity: mean joy intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "sadness",
+            "description": "NRC Intensity: mean sadness intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "surprise",
+            "description": "NRC Intensity: mean surprise intensity across keywords (0\u20131)"
+          },
+          {
+            "name": "trust",
+            "description": "NRC Intensity: mean trust intensity across keywords (0\u20131)"
+          },
+          {
             "name": "id",
-            "description": "TMDB movie ID (integer)"
+            "description": "TMDB movie ID"
           },
           {
             "name": "title",
@@ -56,11 +107,11 @@
           },
           {
             "name": "adult",
-            "description": "Whether the movie is adult-rated (boolean)"
+            "description": "Adult-rated film (boolean)"
           },
           {
             "name": "backdrop_path",
-            "description": "Relative path to backdrop image on TMDB CDN"
+            "description": "Backdrop image path on TMDB CDN"
           },
           {
             "name": "budget",
@@ -76,7 +127,7 @@
           },
           {
             "name": "original_language",
-            "description": "Original production language code (ISO 639-1)"
+            "description": "Original language code (ISO 639-1)"
           },
           {
             "name": "original_title",
@@ -92,7 +143,7 @@
           },
           {
             "name": "poster_path",
-            "description": "Relative path to poster image on TMDB CDN"
+            "description": "Poster image path on TMDB CDN"
           },
           {
             "name": "tagline",
@@ -116,55 +167,7 @@
           },
           {
             "name": "keywords",
-            "description": "Comma-separated TMDB plot keywords (source for emotion scoring)"
-          },
-          {
-            "name": "sentiment",
-            "description": "Derived sentiment label: positive (valence>0.5), negative (valence<0.5), neutral, or unknown (no keywords)"
-          },
-          {
-            "name": "valence",
-            "description": "NRC VAD: mean keyword valence (0=negative, 1=positive). Relative scale \u2014 higher means more positive-associated keywords."
-          },
-          {
-            "name": "arousal",
-            "description": "NRC VAD: mean keyword arousal (0=calm, 1=excited/activated)"
-          },
-          {
-            "name": "dominance",
-            "description": "NRC VAD: mean keyword dominance (0=submissive, 1=controlling/powerful)"
-          },
-          {
-            "name": "anger",
-            "description": "NRC Intensity: mean anger intensity of keywords (0\u20131). 0 = no matched keywords."
-          },
-          {
-            "name": "anticipation",
-            "description": "NRC Intensity: mean anticipation intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "disgust",
-            "description": "NRC Intensity: mean disgust intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "fear",
-            "description": "NRC Intensity: mean fear intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "joy",
-            "description": "NRC Intensity: mean joy intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "sadness",
-            "description": "NRC Intensity: mean sadness intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "surprise",
-            "description": "NRC Intensity: mean surprise intensity of keywords (0\u20131)"
-          },
-          {
-            "name": "trust",
-            "description": "NRC Intensity: mean trust intensity of keywords (0\u20131)"
+            "description": "Comma-separated TMDB plot keywords \u2014 source for all emotion scores below"
           }
         ]
       }

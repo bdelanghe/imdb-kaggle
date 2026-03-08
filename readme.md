@@ -1,15 +1,100 @@
 # tmdb-nrc-emotional-intensity-movie-keywords
 
-A dataset pipeline combining the [TMDB movies dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (~930K movies) with the [NRC Emotional Intensity Lexicon](https://www.saifmohammad.com/WebPages/AffectIntensity.htm) to produce emotion-scored keyword features per movie.
+A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (~1.38M movies) with three NRC affective lexicons to produce per-movie emotion and sentiment scores derived from plot keywords.
 
-The output is a Kaggle dataset annotating movie keywords with real-valued intensity scores (0–1) across eight emotions: anger, fear, joy, sadness, disgust, surprise, anticipation, trust.
+**Output dataset:** [kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores)
+
+---
+
+## What it produces
+
+36 columns per movie — all 24 original TMDB columns plus 12 scored columns:
+
+| Column | Source | Description |
+|--------|--------|-------------|
+| `sentiment` | derived | positive / negative / neutral / unknown |
+| `valence` | NRC VAD | positivity of keyword associations (0–1) |
+| `arousal` | NRC VAD | energy/activation level (0–1) |
+| `dominance` | NRC VAD | sense of control/power (0–1) |
+| `anger` | NRC Intensity | mean anger intensity across keywords (0–1) |
+| `anticipation` | NRC Intensity | mean anticipation intensity (0–1) |
+| `disgust` | NRC Intensity | mean disgust intensity (0–1) |
+| `fear` | NRC Intensity | mean fear intensity (0–1) |
+| `joy` | NRC Intensity | mean joy intensity (0–1) |
+| `sadness` | NRC Intensity | mean sadness intensity (0–1) |
+| `surprise` | NRC Intensity | mean surprise intensity (0–1) |
+| `trust` | NRC Intensity | mean trust intensity (0–1) |
+
+Column order in CSV: `id, title, keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
+
+---
+
+## Lexicons used
+
+| Lexicon | Words | Dimensions | Link |
+|---------|-------|------------|------|
+| NRC Emotion Lexicon (EmoLex) | 14,182 | binary (8 emotions + pos/neg) | [link](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm) |
+| NRC Emotion Intensity Lexicon | 5,891 | continuous 0–1 (8 emotions) | [link](https://saifmohammad.com/WebPages/AffectIntensity.htm) |
+| NRC VAD Lexicon | 19,971 | continuous 0–1 (valence, arousal, dominance) | [link](https://saifmohammad.com/WebPages/nrc-vad.html) |
+
+All lexicons by Saif M. Mohammad, National Research Council Canada. Full index: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)
+
+---
+
+## Pipeline
+
+```
+TMDB keywords (comma-separated phrases)
+  → tokenize on whitespace / hyphens
+  → lemmatize (NLTK WordNetLemmatizer, noun / verb / adj POS)
+  → look up each lemma in NRC intensity + VAD dicts
+  → average matched token scores per keyword
+  → average keyword scores per movie
+```
+
+**Notebooks:**
+- `01_lexicons.ipynb` — load NRC files, build lookup dicts, save `data/lexicons/nrc_lookups.pkl` (run once)
+- `02_score_and_export.ipynb` — load TMDB + pickle, score all movies, write CSV, upload to Kaggle
+
+**Performance:** ~408K movies/sec on 1.38M rows (~3.5s total), 828 MB peak RAM.
+
+---
+
+## Methodological notes
+
+Scores represent **perceived emotional word associations** — not ground-truth movie sentiment. See: Mohammad (2020), [Practical and Ethical Considerations in the Effective use of Emotion and Sentiment Lexicons](https://www.saifmohammad.com/WebDocs/EmoLex-Ethics-Data-Statement.pdf).
+
+- Scores are **relative, not absolute** — valence 0.7 means "more positive than 0.6", not "70% positive"
+- **Association ≠ denotation** — "party" associates with joy but does not mean joy
+- ~75% of rows have no TMDB keywords and are scored as `unknown`
+
+Correct interpretation: *"Movies with these keywords contain more joy-associated language"* — not *"this movie is joyful."*
+
+---
 
 ## Quickstart
 
 ```bash
-cp .env.example .env   # add KAGGLE_API_TOKEN
+cp .env.example .env        # add KAGGLE_API_TOKEN
 devbox run install-requirements
-devbox run notebook
+# or: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+# Step 1 — build lexicon pickle (once)
+jupyter nbconvert --to notebook --execute 01_lexicons.ipynb
+
+# Step 2 — score all movies + export
+jupyter nbconvert --to notebook --execute 02_score_and_export.ipynb
+# Then uncomment the upload cell and run: kaggle datasets version -p output -m "..."
 ```
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for environment setup, task tracking, and editor configuration.
+Output CSV is **not tracked in git** — Kaggle is the source of truth.
+
+---
+
+## Future work / related lexicons
+
+- [Warriner VAD](https://link.springer.com/article/10.3758/s13428-012-0314-x) — 13,915 human-rated lemmas, strong validation source for NRC VAD
+- [ANEW](https://pdodds.w3.uvm.edu/teaching/courses/2009-08UVM-300/docs/others/everything/bradley1999a.pdf) — classic VAD norms
+- [LIWC](https://www.liwc.app) — category-based psycholinguistic features
+- [SenticNet](https://sentic.net) — concept-level sentiment for multi-word phrases
+- [MovieLens Tag Genome](https://grouplens.org/datasets/movielens/tag-genome-2021/) — semantic movie tags with relevance scores
