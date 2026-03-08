@@ -91,6 +91,14 @@ Output CSV is **not tracked in git** — Kaggle is the source of truth.
 
 ---
 
+## License
+
+This dataset is released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — the same non-commercial share-alike restriction as the upstream NRC lexicons by Saif M. Mohammad (National Research Council Canada). You may use and share it freely for non-commercial purposes with attribution.
+
+Source data: [TMDB Movies Dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) — check upstream license for TMDB data terms.
+
+---
+
 ## Future work / related lexicons
 
 - [Warriner VAD](https://link.springer.com/article/10.3758/s13428-012-0314-x) — 13,915 human-rated lemmas, strong validation source for NRC VAD
