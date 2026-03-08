@@ -7,6 +7,7 @@ data/
 
 # Dolt database files (added by bd init)
 .dolt/
+.beads/dolt*
 *.db
 
 # Large output files — Kaggle is the source of truth
