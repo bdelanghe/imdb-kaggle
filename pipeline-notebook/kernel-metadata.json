@@ -1,0 +1,15 @@
+{
+  "id": "bdelanghe/how-tmdb-movie-vad-emotion-scores-are-built",
+  "title": "How TMDB Movie VAD + Emotion Scores Are Built",
+  "code_file": "pipeline.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "asaniczka/tmdb-movies-dataset-2023-930k-movies"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
