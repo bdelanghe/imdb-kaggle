@@ -4,6 +4,8 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 
 **Output dataset:** [kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores)
 
+**Analysis notebook:** [kaggle.com/code/bdelanghe/exploring-emotional-profiles-in-1-38m-tmdb-movies](https://www.kaggle.com/code/bdelanghe/exploring-emotional-profiles-in-1-38m-tmdb-movies)
+
 ---
 
 ## What it produces
@@ -26,6 +28,8 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 | `trust` | NRC Intensity | mean trust intensity (0–1) |
 
 Column order in CSV: `id, title, keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
+
+**Coverage:** 1,382,594 movies — 320,895 (23.2%) have keyword coverage and receive emotion scores. The remaining 76.8% are scored `unknown` (no TMDB keywords).
 
 ---
 
@@ -55,8 +59,11 @@ TMDB keywords (comma-separated phrases)
 **Notebooks:**
 - `01_lexicons.ipynb` — load NRC files, build lookup dicts, save `data/lexicons/nrc_lookups.pkl` (run once)
 - `02_score_and_export.ipynb` — load TMDB + pickle, score all movies, write CSV, upload to Kaggle
+- `kaggle_notebook.ipynb` — analysis notebook published to Kaggle; genre VAD profiles, top films by emotion, visualizations
 
 **Performance:** ~408K movies/sec on 1.38M rows (~3.5s total), 828 MB peak RAM.
+
+**Automation:** `.github/workflows/pipeline.yml` runs the full pipeline on a monthly schedule and on manual dispatch. Requires `KAGGLE_API_TOKEN` set as a repository secret.
 
 ---
 
@@ -66,7 +73,7 @@ Scores represent **perceived emotional word associations** — not ground-truth 
 
 - Scores are **relative, not absolute** — valence 0.7 means "more positive than 0.6", not "70% positive"
 - **Association ≠ denotation** — "party" associates with joy but does not mean joy
-- ~75% of rows have no TMDB keywords and are scored as `unknown`
+- ~77% of rows have no TMDB keywords and are scored as `unknown`
 
 Correct interpretation: *"Movies with these keywords contain more joy-associated language"* — not *"this movie is joyful."*
 
@@ -76,15 +83,19 @@ Correct interpretation: *"Movies with these keywords contain more joy-associated
 
 ```bash
 cp .env.example .env        # add KAGGLE_API_TOKEN
-devbox run install-requirements
-# or: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 # Step 1 — build lexicon pickle (once)
 jupyter nbconvert --to notebook --execute 01_lexicons.ipynb
 
-# Step 2 — score all movies + export
+# Step 2 — score all movies + export CSV
 jupyter nbconvert --to notebook --execute 02_score_and_export.ipynb
-# Then uncomment the upload cell and run: kaggle datasets version -p output -m "..."
+
+# Step 3 — upload to Kaggle
+kaggle datasets version -p output -m "your message"
+
+# Step 4 — push analysis notebook
+kaggle kernels push -p .
 ```
 
 Output CSV is **not tracked in git** — Kaggle is the source of truth.
