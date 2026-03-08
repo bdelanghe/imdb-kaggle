@@ -1,0 +1,13 @@
+{
+  "id": "bdelanghe/exploring-emotional-profiles-in-1-38m-tmdb-movies",
+  "title": "Exploring Emotional Profiles in 1.38M TMDB Movies",
+  "code_file": "kaggle_notebook.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_internet": false,
+  "dataset_sources": ["bdelanghe/tmdb-movie-vad-emotion-scores"],
+  "competition_sources": [],
+  "kernel_sources": []
+}
