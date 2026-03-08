@@ -79,6 +79,7 @@ Scores represent **perceived emotional word associations** — not ground-truth 
 - Scores are **relative, not absolute** — valence 0.3 means "more positive than -0.3", not "30% positive" (bipolar scale -1 to +1)
 - **Association ≠ denotation** — "party" associates with joy but does not mean joy
 - ~77% of rows have no TMDB keywords and are scored as `unknown`. VAD uses NRC VAD Lexicon v2.1 (released March 2025) with MWE phrase lookup.
+- **Bipolar composition caveat** — when a keyword isn't in the MWE list it's tokenized and token scores are averaged. On a bipolar scale this can wash out signal for phrases not in the lexicon (e.g. "not happy" averages a negative and a positive rather than composing correctly). See: Mohammad et al., [Sentiment Composition of Words with Opposing Polarities](https://www.saifmohammad.com/WebPages/SCL.html).
 
 Correct interpretation: *"Movies with these keywords contain more joy-associated language"* — not *"this movie is joyful."*
 
