@@ -7,7 +7,7 @@
   "is_private": false,
   "enable_gpu": false,
   "enable_internet": false,
-  "dataset_sources": ["bdelanghe/tmdb-movie-vad-emotion-scores"],
+  "dataset_sources": ["bdelanghe/tmdb-movie-vad-emotion-scores", "asaniczka/tmdb-movies-dataset-2023-930k-movies"],
   "competition_sources": [],
   "kernel_sources": []
 }
