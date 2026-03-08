@@ -10,10 +10,14 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 
 ## What it produces
 
-36 columns per movie — all 24 original TMDB columns plus 12 scored columns:
+40 columns per movie — all 24 original TMDB columns plus 16 derived columns:
 
 | Column | Source | Description |
 |--------|--------|-------------|
+| `positive_keywords` | derived | Keywords with NRC VAD valence > 0.5 |
+| `negative_keywords` | derived | Keywords with NRC VAD valence < 0.5 |
+| `neutral_keywords` | derived | Keywords with NRC VAD valence = 0.5 |
+| `unknown_keywords` | derived | Keywords with no NRC VAD coverage |
 | `sentiment` | derived | positive / negative / neutral / unknown |
 | `valence` | NRC VAD | positivity of keyword associations (0–1) |
 | `arousal` | NRC VAD | energy/activation level (0–1) |
@@ -27,7 +31,7 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 | `surprise` | NRC Intensity | mean surprise intensity (0–1) |
 | `trust` | NRC Intensity | mean trust intensity (0–1) |
 
-Column order in CSV: `id, title, keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
+Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords, neutral_keywords, unknown_keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
 
 **Coverage:** 1,382,594 movies — 320,895 (23.2%) have keyword coverage and receive emotion scores. The remaining 76.8% are scored `unknown` (no TMDB keywords).
 

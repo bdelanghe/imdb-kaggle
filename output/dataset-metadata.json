@@ -22,9 +22,25 @@
   "resources": [
     {
       "path": "movie_vad_scores.csv",
-      "description": "1.38M TMDB movies \u2014 all 24 original columns plus 12 NRC emotion/VAD scores. Column order: id, title, keywords, emotion scores, then remaining TMDB metadata.",
+      "description": "1.38M TMDB movies \u2014 all 24 original columns plus 16 derived columns (4 keyword groups + 12 NRC emotion/VAD scores). Column order: id, title, keywords, keyword groups, emotion scores, then remaining TMDB metadata.",
       "schema": {
         "fields": [
+          {
+            "name": "positive_keywords",
+            "description": "Comma-separated keywords whose NRC VAD valence > 0.5 (positive-associated)"
+          },
+          {
+            "name": "negative_keywords",
+            "description": "Comma-separated keywords whose NRC VAD valence < 0.5 (negative-associated)"
+          },
+          {
+            "name": "neutral_keywords",
+            "description": "Comma-separated keywords whose NRC VAD valence = 0.5 exactly"
+          },
+          {
+            "name": "unknown_keywords",
+            "description": "Comma-separated keywords with no NRC VAD coverage (valence unknown)"
+          },
           {
             "name": "sentiment",
             "description": "Derived label: positive (valence>0.5), negative (valence<0.5), neutral, unknown (no keywords)"
