@@ -1,0 +1,17 @@
+{
+  "id": "bdelanghe/tmdb-keyword-lexicon-analysis",
+  "title": "tmdb-keyword-lexicon-analysis",
+  "code_file": "keyword_analysis.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "bdelanghe/tmdb-keyword-lexicon",
+    "bdelanghe/tmdb-movie-vad-emotion-scores"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
