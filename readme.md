@@ -34,7 +34,7 @@ Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords,
 
 **VAD scale:** bipolar -1 to +1 (0 = neutral). Sentiment: `valence > 0` → positive, `valence < 0` → negative. Keyword groups use same threshold.
 
-**Coverage:** 1,382,594 movies — 320,895 (23.2%) have keyword coverage and receive emotion scores. The remaining 76.8% are scored `unknown` (no TMDB keywords).
+**Coverage:** ~1.24M movies (adult-labeled films excluded) — ~23% have keyword coverage and receive emotion scores. The remaining ~77% are scored `unknown` (no TMDB keywords). Adult movies (`adult=True` in TMDB, ~10% of the raw dataset) are excluded from the published output.
 
 ---
 
