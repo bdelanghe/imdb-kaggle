@@ -1,8 +1,8 @@
 {
   "title": "TMDB Movie VAD + Emotion Intensity Scores",
   "id": "bdelanghe/tmdb-movie-vad-emotion-scores",
-  "subtitle": "NRC VAD + emotion intensity for 1.38M TMDB movies",
-  "description": "## TMDB Movie Emotional Feature Matrix\n\nAll 24 original TMDB columns (~1.38M movies) enriched with 12 affective scores derived from movie keywords using NRC lexicons by Saif M. Mohammad (National Research Council Canada).\n\n### Scored Columns\n\n| Column | Source | Description |\n|--------|--------|-------------|\n| sentiment | derived | positive / negative / neutral / unknown |\n| valence | NRC VAD | positivity of keyword associations (0\u20131) |\n| arousal | NRC VAD | energy/activation level (0\u20131) |\n| dominance | NRC VAD | sense of control/power (0\u20131) |\n| anger \u2026 trust | NRC Intensity | mean emotion intensity across keywords (0\u20131) |\n\nColumn order: identity (id, title, keywords) \u2192 emotion scores \u2192 remaining TMDB metadata.\n\n### Pipeline\n\n```\nTMDB keywords \u2192 tokenize \u2192 lemmatize (NLTK noun/verb/adj) \u2192 NRC lookup \u2192 average per movie\n```\n\nSource: https://github.com/bdelanghe/imdb-kaggle\n\n### Data Sources\n\n- TMDB Movies Dataset (input): https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies\n\n### Lexicon Sources\n\n- NRC Emotion Lexicon: https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm\n- NRC Emotion Intensity Lexicon: https://saifmohammad.com/WebPages/AffectIntensity.htm\n- NRC VAD Lexicon: https://saifmohammad.com/WebPages/nrc-vad.html\n- All NRC lexicons: https://saifmohammad.com/WebPages/lexicons.html\n\n### Methodological Notes (Mohammad, 2020)\n\nScores represent **perceived emotional word associations** \u2014 not ground-truth movie sentiment.\n- Scores are relative, not absolute (valence 0.7 = \"more positive than 0.6\", not \"70% positive\")\n- Association \u2260 denotation (\"party\" associates with joy but does not mean joy)\n- ~75% of rows have no TMDB keywords and are scored as unknown\n\nCorrect: *\"Movies with these keywords contain more joy-associated language\"* \u2014 not *\"this movie is joyful.\"*\n\n### Future Work\n\nWarriner VAD \u00b7 ANEW \u00b7 LIWC \u00b7 SenticNet \u00b7 MovieLens Tag Genome",
+  "subtitle": "NRC VAD v2.1 + emotion intensity for 1.38M TMDB movies",
+  "description": "## TMDB Movie Emotional Feature Matrix\n\nAll 24 original TMDB columns (~1.38M movies) enriched with 12 affective scores derived from movie keywords using NRC lexicons by Saif M. Mohammad (National Research Council Canada).\n\n### Scored Columns\n\n| Column | Source | Description |\n|--------|--------|-------------|\n| sentiment | derived | positive / negative / neutral / unknown |\n| valence | NRC VAD v2.1 | positivity of keyword associations (-1 to +1) |\n| arousal | NRC VAD v2.1 | energy/activation level (-1 to +1) |\n| dominance | NRC VAD v2.1 | sense of control/power (-1 to +1) |\n| anger \u2026 trust | NRC Intensity | mean emotion intensity across keywords (0\u20131) |\n\nColumn order: identity (id, title, keywords) \u2192 emotion scores \u2192 remaining TMDB metadata.\n\n### Pipeline\n\n```\nTMDB keywords \u2192 phrase lookup (NRC VAD v2.1 MWE) \u2192 tokenize \u2192 lemmatize \u2192 NRC lookup \u2192 average per movie\n```\n\nSource: https://github.com/bdelanghe/imdb-kaggle\n\n### Data Sources\n\n- TMDB Movies Dataset (input): https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies\n\n### Lexicon Sources\n\n- NRC Emotion Lexicon: https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm\n- NRC Emotion Intensity Lexicon: https://saifmohammad.com/WebPages/AffectIntensity.htm\n- NRC VAD Lexicon: https://saifmohammad.com/WebPages/nrc-vad.html\n- All NRC lexicons: https://saifmohammad.com/WebPages/lexicons.html\n\n### Methodological Notes (Mohammad, 2020)\n\nScores represent **perceived emotional word associations** \u2014 not ground-truth movie sentiment.\n- Scores are relative, not absolute (valence 0.7 = \"more positive than 0.6\", not \"70% positive\")\n- Association \u2260 denotation (\"party\" associates with joy but does not mean joy)\n- ~75% of rows have no TMDB keywords and are scored as unknown\n\nCorrect: *\"Movies with these keywords contain more joy-associated language\"* \u2014 not *\"this movie is joyful.\"*\n\n### Future Work\n\nWarriner VAD \u00b7 ANEW \u00b7 LIWC \u00b7 SenticNet \u00b7 MovieLens Tag Genome",
   "isPrivate": false,
   "licenses": [
     {
@@ -27,31 +27,31 @@
         "fields": [
           {
             "name": "positive_keywords",
-            "description": "Comma-separated keywords whose NRC VAD valence >= 0.5 (positive-associated)"
+            "description": "Comma-separated keywords whose NRC VAD v2.1 valence >= 0 (positive-associated)"
           },
           {
             "name": "negative_keywords",
-            "description": "Comma-separated keywords whose NRC VAD valence < 0.5 (negative-associated)"
+            "description": "Comma-separated keywords whose NRC VAD v2.1 valence < 0 (negative-associated)"
           },
           {
             "name": "unknown_keywords",
-            "description": "Comma-separated keywords with no NRC VAD coverage (valence unknown)"
+            "description": "Comma-separated keywords with no NRC VAD v2.1 coverage"
           },
           {
             "name": "sentiment",
-            "description": "Derived label: positive (valence>0.5), negative (valence<0.5), neutral, unknown (no keywords)"
+            "description": "Derived label: positive (valence>0), negative (valence<0), neutral (valence=0), unknown (no keywords)"
           },
           {
             "name": "valence",
-            "description": "NRC VAD: mean keyword valence (0=negative, 1=positive). Relative \u2014 higher means more positive-associated."
+            "description": "NRC VAD v2.1: mean keyword valence (-1=negative, +1=positive, 0=neutral). Bipolar scale."
           },
           {
             "name": "arousal",
-            "description": "NRC VAD: mean keyword arousal (0=calm, 1=excited)"
+            "description": "NRC VAD v2.1: mean keyword arousal (-1=calm, +1=excited)"
           },
           {
             "name": "dominance",
-            "description": "NRC VAD: mean keyword dominance (0=submissive, 1=powerful)"
+            "description": "NRC VAD v2.1: mean keyword dominance (-1=submissive, +1=powerful)"
           },
           {
             "name": "anger",

@@ -14,13 +14,13 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 
 | Column | Source | Description |
 |--------|--------|-------------|
-| `positive_keywords` | derived | Keywords with NRC VAD valence >= 0.5 |
-| `negative_keywords` | derived | Keywords with NRC VAD valence < 0.5 |
+| `positive_keywords` | derived | Keywords with NRC VAD v2.1 valence >= 0 |
+| `negative_keywords` | derived | Keywords with NRC VAD v2.1 valence < 0 |
 | `unknown_keywords` | derived | Keywords with no NRC VAD coverage |
 | `sentiment` | derived | positive / negative / neutral / unknown |
-| `valence` | NRC VAD | positivity of keyword associations (0–1) |
-| `arousal` | NRC VAD | energy/activation level (0–1) |
-| `dominance` | NRC VAD | sense of control/power (0–1) |
+| `valence` | NRC VAD v2.1 | positivity of keyword associations (-1 to +1) |
+| `arousal` | NRC VAD v2.1 | energy/activation level (-1 to +1) |
+| `dominance` | NRC VAD v2.1 | sense of control/power (-1 to +1) |
 | `anger` | NRC Intensity | mean anger intensity across keywords (0–1) |
 | `anticipation` | NRC Intensity | mean anticipation intensity (0–1) |
 | `disgust` | NRC Intensity | mean disgust intensity (0–1) |
@@ -32,6 +32,8 @@ A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datase
 
 Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords, unknown_keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
 
+**VAD scale:** bipolar -1 to +1 (0 = neutral). Sentiment: `valence > 0` → positive, `valence < 0` → negative. Keyword groups use same threshold.
+
 **Coverage:** 1,382,594 movies — 320,895 (23.2%) have keyword coverage and receive emotion scores. The remaining 76.8% are scored `unknown` (no TMDB keywords).
 
 ---
@@ -42,7 +44,7 @@ Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords,
 |---------|-------|------------|------|
 | NRC Emotion Lexicon (EmoLex) | 14,182 | binary (8 emotions + pos/neg) | [link](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm) |
 | NRC Emotion Intensity Lexicon | 5,891 | continuous 0–1 (8 emotions) | [link](https://saifmohammad.com/WebPages/AffectIntensity.htm) |
-| NRC VAD Lexicon | 19,971 | continuous 0–1 (valence, arousal, dominance) | [link](https://saifmohammad.com/WebPages/nrc-vad.html) |
+| NRC VAD Lexicon v2.1 | 54,801 (unigrams + MWEs) | bipolar -1 to +1 (valence, arousal, dominance) | [link](https://saifmohammad.com/WebPages/nrc-vad.html) |
 
 All lexicons by Saif M. Mohammad, National Research Council Canada. Full index: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)
 
@@ -74,9 +76,9 @@ TMDB keywords (comma-separated phrases)
 
 Scores represent **perceived emotional word associations** — not ground-truth movie sentiment. See: Mohammad (2020), [Practical and Ethical Considerations in the Effective use of Emotion and Sentiment Lexicons](https://www.saifmohammad.com/WebDocs/EmoLex-Ethics-Data-Statement.pdf).
 
-- Scores are **relative, not absolute** — valence 0.7 means "more positive than 0.6", not "70% positive"
+- Scores are **relative, not absolute** — valence 0.3 means "more positive than -0.3", not "30% positive" (bipolar scale -1 to +1)
 - **Association ≠ denotation** — "party" associates with joy but does not mean joy
-- ~77% of rows have no TMDB keywords and are scored as `unknown`
+- ~77% of rows have no TMDB keywords and are scored as `unknown`. VAD uses NRC VAD Lexicon v2.1 (released March 2025) with MWE phrase lookup.
 
 Correct interpretation: *"Movies with these keywords contain more joy-associated language"* — not *"this movie is joyful."*
 
