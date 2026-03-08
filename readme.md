@@ -50,6 +50,26 @@ All lexicons by Saif M. Mohammad, National Research Council Canada. Full index: 
 
 ---
 
+## Data provenance
+
+```
+TMDb API  (themoviedb.org)
+  → ~1.38M movie records fetched via /3/movie/{id} REST endpoint
+  → flattened to 24-column CSV by asaniczka
+  → published: kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies
+
+TMDb CSV  (keywords column)
+  → this pipeline extracts the keywords field only
+  → scores each unique keyword against three NRC lexicons
+  → aggregates keyword scores per movie
+
+Output: kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores
+```
+
+TMDb data is sourced from [The Movie Database](https://www.themoviedb.org/) via their public API. Attribution required per [TMDb API terms](https://www.themoviedb.org/api-terms-of-use). The upstream Kaggle dataset (`asaniczka/tmdb-movies-dataset-2023-930k-movies`) is refreshed daily from the TMDb API.
+
+---
+
 ## Pipeline
 
 ```
