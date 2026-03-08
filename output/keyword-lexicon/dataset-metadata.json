@@ -1,0 +1,14 @@
+{
+  "title": "TMDB Keyword Lexicon — NRC Emotion + VAD Scores",
+  "id": "bdelanghe/tmdb-keyword-lexicon",
+  "licenses": [{"name": "CC-BY-NC-SA-4.0"}],
+  "subtitle": "67,916 unique TMDB keywords scored against 3 NRC affective lexicons",
+  "description": "One row per unique keyword phrase from the TMDB movies dataset, joined to all three NRC lexicons by Saif M. Mohammad (NRC Canada).\n\n**26 columns:**\n- `keyword`, `n_movies` — phrase and how many TMDB movies use it\n- `emolex_found`, `intensity_found`, `vad_found` — coverage flags per lexicon\n- `emolex_*` — binary union across tokens (8 emotions + positive/negative)\n- `intensity_*` — mean intensity across matched tokens (8 emotions, 0–1)\n- `vad_valence`, `vad_arousal`, `vad_dominance` — bipolar −1 to +1 (NRC VAD v2.1, MWE-first)\n\n**EmoLex rule:** union across tokens — if any token maps to `fear=1`, the keyword gets `emolex_fear=1`.\n**Intensity + VAD rule:** mean across matched tokens. VAD checks full phrase as MWE before tokenizing.\n\n**Coverage:** EmoLex 55.5%, Intensity 31.5%, VAD 65.7%\n\n**Known limitation:** token-level averaging on a bipolar scale is lossy for phrases not in the VAD MWE list. See: Mohammad et al., [SCL](https://www.saifmohammad.com/WebPages/SCL.html).\n\n**License:** CC BY-NC-SA 4.0 — matches upstream NRC lexicon non-commercial restriction.\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
+  "keywords": ["movies", "nlp", "sentiment-analysis", "emotions", "tmdb", "nrc", "lexicon", "keywords", "vad"],
+  "resources": [
+    {
+      "path": "tmdb_keyword_lexicon.csv",
+      "description": "67,916 unique TMDB keyword phrases with NRC EmoLex binary scores, NRC Intensity scores, and NRC VAD v2.1 bipolar scores."
+    }
+  ]
+}
