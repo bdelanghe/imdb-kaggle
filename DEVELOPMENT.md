@@ -58,15 +58,43 @@ Current issues:
 
 ## NRC Lexicons
 
-**NRC Word-Emotion Lexicon** (binary, 8 emotions + 2 sentiments):
+> **License**: NRC lexicons are free for research/non-commercial use. Commercial use requires permission from the author.
+> See the [NRC EmoLex Ethics & Data Statement](https://www.saifmohammad.com/WebDocs/EmoLex-Ethics-Data-Statement.pdf) for full terms.
+
+**NRC Word-Emotion Lexicon / EmoLex** (binary, 8 emotions + positive/negative sentiment):
+- Homepage: https://www.saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm
+- Download zip (includes wordlevel + senselevel + multilingual files):
 
 ```bash
 mkdir -p data
-curl -L https://nyc3.digitaloceanspaces.com/ml-files-distro/v1/upshot-trump-emolex/data/NRC-emotion-lexicon-wordlevel-alphabetized-v0.92.txt \
-  -o data/NRC-emotion-lexicon-wordlevel-alphabetized-v0.92.txt
+curl -L https://www.saifmohammad.com/WebDocs/Lexicons/NRC-Emotion-Lexicon.zip \
+  -o data/NRC-Emotion-Lexicon.zip && unzip data/NRC-Emotion-Lexicon.zip -d data/NRC-Emotion-Lexicon
 ```
 
-**NRC Emotion Intensity Lexicon** (real-valued 0–1, 8 emotions): download from [saifmohammad.com](https://www.saifmohammad.com/WebPages/AffectIntensity.htm) — direct HTTP download returns 406, manual download required.
+**NRC Emotion Intensity Lexicon / EIL** (real-valued 0–1, 8 emotions):
+- Homepage: https://www.saifmohammad.com/WebPages/AffectIntensity.htm
+
+```bash
+curl -L https://www.saifmohammad.com/WebDocs/Lexicons/NRC-Emotion-Intensity-Lexicon.zip \
+  -o data/NRC-Emotion-Intensity-Lexicon.zip && unzip data/NRC-Emotion-Intensity-Lexicon.zip -d data/NRC-Emotion-Intensity-Lexicon
+```
+
+### Emotion–sentiment correlation (empirical, computed from EmoLex)
+
+Words in EmoLex with a given emotion label are also labelled positive/negative at these rates:
+
+| emotion      | pos%  | neg%  | signal            |
+|--------------|-------|-------|-------------------|
+| joy          | 98.4% | 5.4%  | strongly positive |
+| trust        | 69.3% | 5.8%  | positive          |
+| anticipation | 57.5% | 21.1% | positive          |
+| surprise     | 41.4% | 40.8% | mixed             |
+| anger        | 4.7%  | 92.0% | strongly negative |
+| disgust      | 2.8%  | 91.8% | strongly negative |
+| sadness      | 4.8%  | 89.7% | strongly negative |
+| fear         | 6.8%  | 83.4% | negative          |
+
+This mapping drives the `{emotion}_positive_intensity` / `{emotion}_negative_intensity` features in `nrc_scored`.
 
 ## Kaggle
 
