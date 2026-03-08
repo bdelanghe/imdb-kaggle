@@ -2,10 +2,6 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "jupyter.kernels.excludePythonEnvironments": [],
 
-  "ipub.outputDir": "${workspaceFolder}/output",
-  "ipub.exportFormat": "html",
-  "ipub.openAfterExport": true,
-
   "terminal.integrated.defaultProfile.osx": "devbox",
   "terminal.integrated.defaultProfile.linux": "devbox",
   "terminal.integrated.defaultProfile.windows": "devbox",
