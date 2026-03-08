@@ -27,15 +27,11 @@
         "fields": [
           {
             "name": "positive_keywords",
-            "description": "Comma-separated keywords whose NRC VAD valence > 0.5 (positive-associated)"
+            "description": "Comma-separated keywords whose NRC VAD valence >= 0.5 (positive-associated)"
           },
           {
             "name": "negative_keywords",
             "description": "Comma-separated keywords whose NRC VAD valence < 0.5 (negative-associated)"
-          },
-          {
-            "name": "neutral_keywords",
-            "description": "Comma-separated keywords whose NRC VAD valence = 0.5 exactly"
           },
           {
             "name": "unknown_keywords",
