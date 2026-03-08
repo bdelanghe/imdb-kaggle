@@ -1,0 +1,10 @@
+{
+  "title": "TMDB Movie VAD + Emotion Intensity Scores",
+  "id": "bdelanghe/tmdb-movie-vad-emotion-scores",
+  "licenses": [
+    {
+      "name": "CC0-1.0"
+    }
+  ],
+  "description": "~930K TMDB movies scored with NRC VAD (valence/arousal/dominance) and NRC Emotion Intensity (anger, fear, joy, sadness, disgust, surprise, anticipation, trust) derived from movie keywords. Valence > 0.5 = positive sentiment."
+}
