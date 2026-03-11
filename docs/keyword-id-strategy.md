@@ -1,6 +1,7 @@
 # Keyword ID Strategy
 
-Goal: assign `tmdb_keyword_id` (and eventually `imdb_keyword_id`) to every keyword in `output/tmdb_keyword_lexicon.csv`.
+> **Scope:** This is a TMDB project. We initially considered IMDB but scoped to TMDB only.
+> Goal: assign `tmdb_keyword_id` to every keyword in `output/tmdb_keyword_lexicon.csv`.
 
 ---
 
@@ -9,13 +10,12 @@ Goal: assign `tmdb_keyword_id` (and eventually `imdb_keyword_id`) to every keywo
 | Source | Keywords | API cost | Freshness |
 |--------|----------|----------|-----------|
 | **TMDB daily export** | 84,761 | 0 requests | Updated daily at `files.tmdb.org` |
-| **TMDB search/keyword** | any | 1 req/name, ~73 kw/s with 40 concurrency | Live |
+| **TMDB search/keyword** | any | 1 req/name, ~20 concurrent | Live |
 | **TMDB movie/{id}/keywords** | per-movie | 1 req/movie | Live |
-| **IMDB endpoint** | TBD | TBD | TBD |
 
 ---
 
-## Phase 1 — TMDB daily export (zero API cost)
+## Phase 1 — TMDB daily export (zero API cost) ✅
 
 **Script:** `scripts/build_tmdb_canonical.py`
 
@@ -28,60 +28,44 @@ One JSON object per line: `{"id": 9826, "name": "murder"}`.
 
 Download once → 84,761 keyword IDs with no rate limiting.
 
-**Match results against Kaggle keywords (90.5% coverage):**
+**Results:**
 - Kaggle keywords: 67,916
-- Matched by exact lowercase name: 61,462 (90.5%)
-- Unmatched: 6,453 (9.5%)
+- Matched by exact lowercase name: 61,465 (90.5%)
+- Unmatched: 6,451 (9.5%)
+- Runtime: ~10 seconds
 
-Unmatched examples: `london`, `usa`, `mixed martial arts`, `preserved film` — likely
-renamed, merged, or differently normalized in TMDB vs the Kaggle snapshot.
-
----
-
-## Phase 2 — Search API fallback for unmatched keywords
-
-**Script:** `scripts/crawl_tmdb_keywords.py` (search mode, NaN-safe)
-
-For the 6,453 keywords not in the daily export, call `/3/search/keyword?query={name}`
-and look for exact name match in results.
-
-**Rate limit strategy:**
-- 40 concurrent requests via `asyncio.Semaphore(40)`
-- 429 → sleep `Retry-After` header seconds + exponential backoff (2^attempt * 5s)
-- Safe sustained rate: ~20 req/s (well under TMDB's ~50 req/s practical limit)
-- Estimated time: 6,453 / 20 ≈ ~5 min
-
-After this phase, gap drops from 9.5% → ~1–2% (keywords that no longer exist in TMDB).
+Unmatched examples: `london`, `usa`, `mixed martial arts`, `preserved film` — keywords
+renamed, merged, or deleted in TMDB since the Kaggle snapshot was taken.
 
 ---
 
-## Phase 3 — IMDB integration
+## Phase 2 — Search API fallback ✅
 
-**Endpoint:** TBD (user has IMDB API access)
+**Script:** `scripts/crawl_tmdb_keywords.py`
 
-Add `imdb_keyword_id` column to the lexicon. IMDB also maintains a keyword vocabulary.
-Cross-referencing TMDB ↔ IMDB keyword IDs creates a bridge useful for:
-- Joining to IMDB datasets (title.keywords.tsv from IMDb Non-Commercial Datasets)
-- Matching movies across both databases by shared keyword semantics
-- Richer coverage (IMDB has its own distinct keyword set)
+For the 6,451 keywords not in the daily export, called `/3/search/keyword?query={name}`
+with exact name match, 20 concurrent via `asyncio.Semaphore(20)`.
 
-**Design:** add `imdb_keyword_id` as a separate column; don't try to merge the two
-vocabularies since they're independently maintained with different semantics.
+**Results:** Found 4 more matches. Remaining 6,447 keywords are genuinely absent from
+TMDB — they were deleted or renamed before the current export date.
+
+**Final coverage: 61,469 / 67,916 (90.5%)** — this is the ceiling.
 
 ---
 
-## Phase 4 — Movie-level keyword enrichment (optional)
+## Phase 3 — Movie-level enrichment (optional)
 
-For keywords still unmatched after phases 1–2, try:
+For keywords still unmatched, call:
 ```
 GET /3/movie/{tmdb_movie_id}/keywords
 ```
 
-This returns keywords with IDs attached. If we call this for the ~1K movies most likely
-to use a rare keyword (based on `n_movies` count in the lexicon), we can recover IDs
-for most remaining gaps.
+This returns keywords with IDs attached. Calling for the ~1K movies most associated
+with rare keywords (by `n_movies` count) could recover some IDs for keywords that exist
+in TMDB under a different normalization than the Kaggle snapshot used.
 
-**Cost:** ~1K requests ≈ negligible
+**Cost:** ~1K requests, negligible time. Low expected yield given Phase 2 found almost
+nothing — the unmatched keywords are likely truly gone from TMDB.
 
 ---
 
@@ -96,32 +80,32 @@ on 429: sleep Retry-After + exponential backoff (max 60s)
 on timeout: retry up to 3x with 2^n seconds wait
 ```
 
-Never use the documented 40/10s limit as a target — use it as a ceiling.
+Never use the documented 40/10s limit as a target — treat it as a ceiling.
 
 ---
 
 ## Output schema
 
-`data/tmdb_keywords_canonical.csv`:
+`data/tmdb_keywords_canonical.csv` (gitignored, generated):
 ```
 tmdb_keyword_id, name
 ```
 
-`output/tmdb_keyword_lexicon.csv` (updated):
+`output/tmdb_keyword_lexicon.csv` (gitignored, published to Kaggle):
 ```
-keyword, tmdb_keyword_id, imdb_keyword_id, n_movies, emolex_found, ...
+keyword, tmdb_keyword_id, n_movies, emolex_found, ...
 ```
 
 ---
 
-## What "true enum" vs "observed enum" means here
+## True enum vs observed enum
 
-The Kaggle CSV gives us an **observed enum**: keywords we've seen on movies in that snapshot.
+The Kaggle CSV gives us an **observed enum**: keywords seen on movies in that snapshot.
 The TMDB daily export gives us the **true enum**: every keyword TMDB has ever created.
 
 The true enum (84,761) is larger than observed (67,916) because:
 - Some TMDB keywords appear on movies not in the Kaggle dataset
 - Some keywords exist in TMDB but are attached to no movies yet
 
-For our pipeline, we care about matching our observed keywords to IDs so we can use
-`with_keywords=` in TMDB API queries and cross-reference with IMDB.
+The 9.5% gap in the other direction (Kaggle keywords with no TMDB ID) reflects keywords
+that existed when the Kaggle snapshot was taken but have since been removed from TMDB.
