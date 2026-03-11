@@ -38,6 +38,12 @@ Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords,
 
 ---
 
+## Docs
+
+- [NRC VAD Lexicon v2 explainer](docs/nrc-vad-lexicon.md) — what valence, arousal, and dominance mean, how the scores were created, reliability, and caveats
+
+---
+
 ## Lexicons used
 
 | Lexicon | Words | Dimensions | Link |
