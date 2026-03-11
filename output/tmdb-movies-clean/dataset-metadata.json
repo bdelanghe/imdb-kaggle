@@ -18,9 +18,11 @@
   "resources": [
     {
       "path": "tmdb_movies_clean.csv",
-      "description": "1.17M TMDB movies — all 24 original columns, filtered to live TMDB entries only.",
+      "description": "1.17M TMDB movies — 26 columns (24 original + quality + theatrical), filtered to live TMDB entries only.",
       "schema": {
         "fields": [
+          {"name": "quality",              "description": "Entry quality label: real_confident, real_likely, stub_legitimate, stub_uncertain, spam_likely, spam_confident. See https://www.kaggle.com/code/bdelanghe/tmdb-movie-quality-labels"},
+          {"name": "theatrical",           "description": "True = theatrical/streaming release; False = video/bonus release (from TMDB daily export video flag)"},
           {"name": "id",                   "description": "TMDB movie ID"},
           {"name": "title",                "description": "Movie title"},
           {"name": "original_title",       "description": "Title in original language"},

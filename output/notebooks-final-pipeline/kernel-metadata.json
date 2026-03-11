@@ -1,0 +1,16 @@
+{
+  "id": "bdelanghe/tmdb-final-pipeline-exploded-aggregate",
+  "title": "TMDB Final Pipeline Exploded Aggregate",
+  "code_file": "09_final_pipeline.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "bdelanghe/tmdb-movies-clean",
+    "bdelanghe/tmdb-keyword-lexicon"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

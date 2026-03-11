@@ -8,7 +8,7 @@ on:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 240
 
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
           mkdir -p output/tmdb-movies-clean
           cp data/tmdb_movies_clean.csv output/tmdb-movies-clean/tmdb_movies_clean.csv
 
-      # ── Core pipeline: 04 → 06 → 07 → 08 ──────────────────────────────
+      # ── Core pipeline: 04 → 06 → 07 → 08 → 09 ─────────────────────────
       - name: 04 — Build keyword lexicon (NRC emotion + VAD scores per keyword)
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
@@ -81,10 +81,21 @@ jobs:
           jupyter nbconvert --to notebook --execute --inplace 07_keyword_valence.ipynb \
             --ExecutePreprocessor.timeout=300
 
-      - name: 08 — Join movies with keyword scores + aggregate per movie
+      - name: 08 — Movie quality labels (real vs spam, theatrical flag)
         run: |
-          jupyter nbconvert --to notebook --execute --inplace 08_movie_keyword_join.ipynb \
+          jupyter nbconvert --to notebook --execute --inplace 08_movie_quality_filter.ipynb \
+            --ExecutePreprocessor.timeout=300
+
+      - name: 09 — Final pipeline (exploded + aggregate movie scores)
+        run: |
+          jupyter nbconvert --to notebook --execute --inplace 09_final_pipeline.ipynb \
             --ExecutePreprocessor.timeout=600
+
+      - name: Copy final pipeline outputs to output dirs
+        run: |
+          mkdir -p output/tmdb-movie-scores output/tmdb-movie-keywords-exploded
+          cp data/tmdb_movie_scores.csv output/tmdb-movie-scores/
+          cp data/tmdb_movie_keywords_exploded.csv output/tmdb-movie-keywords-exploded/
 
       # ── Push all datasets to Kaggle ─────────────────────────────────────
       - name: Push TMDB movies clean
@@ -114,12 +125,21 @@ jobs:
             -m "Pipeline run $(date +%Y-%m-%d)" \
             --dir-mode zip
 
-      - name: Push movie keyword scores
+      - name: Push movie scores
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
-            -p output/movie-keyword-scores \
+            -p output/tmdb-movie-scores \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
+      - name: Push movie keywords exploded
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          kaggle datasets version \
+            -p output/tmdb-movie-keywords-exploded \
             -m "Pipeline run $(date +%Y-%m-%d)" \
             --dir-mode zip
 
@@ -129,7 +149,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add '04_keyword_lexicon.ipynb' '06_scl_join.ipynb' \
-                  '07_keyword_valence.ipynb' '08_movie_keyword_join.ipynb'
+                  '07_keyword_valence.ipynb' '08_movie_quality_filter.ipynb' \
+                  '09_final_pipeline.ipynb'
           git diff --staged --quiet || \
             git commit -m "chore: pipeline run $(date +%Y-%m-%d) [skip ci]"
           git push

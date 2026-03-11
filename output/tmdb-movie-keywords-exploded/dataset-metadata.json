@@ -1,0 +1,41 @@
+{
+  "title": "TMDB Movie Keywords Exploded — Full Lexicon Scores",
+  "id": "bdelanghe/tmdb-movie-keywords-exploded",
+  "subtitle": "~957K rows: one per (movie, keyword) with all NRC + SCL scores",
+  "description": "## TMDB Movie Keywords Exploded\n\nOne row per (movie, keyword) pair — every TMDB keyword for every movie, joined with the full keyword lexicon (NRC Emotion, NRC Emotion Intensity, NRC VAD v2.1, SCL-OPP).\n\n## Pipeline\n\n```\ntmdb-movies-clean (1.17M movies, 284K with keywords)\n  → explode keywords (~957K pairs)\n  → join tmdb-keyword-lexicon\n```\n\n## Column prefix convention\n\n| Prefix | Source |\n|--------|--------|\n| `emolex_` | NRC Emotion Lexicon (binary emotion membership) |\n| `intensity_` | NRC Emotion Intensity Lexicon (0–1 continuous) |\n| `vad_` | NRC VAD Lexicon v2.1 (valence/arousal/dominance, −1 to +1) |\n| `scl_` | SCL-OPP / SCL-NMA (phrase composition, opposing polarity) |\n\n## Key columns\n\n| Column | Description |\n|--------|-------------|\n| `keyword` | TMDB plot keyword |\n| `keyword_valence` | Best available valence for this keyword (SCL overrides VAD) |\n| `keyword_valence_source` | Where valence came from: scl, vad, or null |\n| `keyword_valence_scale` | Scale of valence score |\n| `vad_valence` | NRC VAD valence (−1 to +1) |\n| `vad_arousal` | NRC VAD arousal (−1 to +1) |\n| `vad_dominance` | NRC VAD dominance (−1 to +1) |\n| `scl_composition_shift` | Phrase valence − mean token valence (compositional surprise) |\n| `scl_composition_type` | Linguistic mechanism: direct, opposing_polarity, idiomatic, ... |\n| `quality` | Movie quality label |\n| `theatrical` | True = theatrical/streaming release |\n\n## Related datasets\n\n- [TMDB Movie Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-scores) — movie-level aggregates\n- [TMDB Keyword Lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) — keyword-level scores (standalone)\n- [TMDB Movies — Clean & Current](https://www.kaggle.com/datasets/bdelanghe/tmdb-movies-clean) — source movie corpus\n\n## Source\n\nhttps://github.com/bdelanghe/imdb-kaggle\n\nLexicons by Saif M. Mohammad (NRC Canada): NRC Emotion Lexicon, NRC Emotion Intensity Lexicon, NRC VAD Lexicon v2.1, SCL-OPP, SCL-NMA.",
+  "isPrivate": false,
+  "licenses": [
+    {
+      "name": "CC-BY-NC-SA-4.0"
+    }
+  ],
+  "keywords": [
+    "movies and tv shows",
+    "nlp",
+    "sentiment analysis",
+    "feature engineering"
+  ],
+  "resources": [
+    {
+      "path": "tmdb_movie_keywords_exploded.csv",
+      "description": "One row per (movie, keyword) pair — 56 columns with movie metadata + all lexicon scores",
+      "schema": {
+        "fields": [
+          {"name": "id",                     "description": "TMDB movie ID"},
+          {"name": "title",                  "description": "Movie title"},
+          {"name": "quality",                "description": "Entry quality label"},
+          {"name": "theatrical",             "description": "True = theatrical/streaming release"},
+          {"name": "keyword",                "description": "TMDB plot keyword"},
+          {"name": "keyword_valence",        "description": "Best available valence (SCL overrides VAD; −1 to +1)"},
+          {"name": "keyword_valence_source", "description": "Source of valence: scl, vad, or null"},
+          {"name": "vad_valence",            "description": "NRC VAD valence (−1 to +1)"},
+          {"name": "vad_arousal",            "description": "NRC VAD arousal (−1 to +1)"},
+          {"name": "vad_dominance",          "description": "NRC VAD dominance (−1 to +1)"},
+          {"name": "scl_found",              "description": "True = keyword found in SCL lexicon"},
+          {"name": "scl_composition_shift",  "description": "Phrase valence − mean token valence"},
+          {"name": "scl_composition_type",   "description": "Linguistic mechanism: direct/opposing_polarity/idiomatic/..."}
+        ]
+      }
+    }
+  ]
+}

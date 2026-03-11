@@ -1,0 +1,47 @@
+{
+  "title": "TMDB Movie Scores — Valence, Emotion & VAD",
+  "id": "bdelanghe/tmdb-movie-scores",
+  "subtitle": "1.17M movies with aggregated keyword valence, emotion intensity & VAD",
+  "description": "## TMDB Movie Scores — Valence, Emotion & VAD\n\nOne row per TMDB movie. Keyword-level lexicon scores (NRC Emotion, NRC Emotion Intensity, NRC VAD, SCL-OPP) are aggregated to the movie level by taking the mean across all scored keywords.\n\n## Pipeline\n\n```\ntmdb-movies-clean (1.17M movies)\n  → explode keywords\n  → join tmdb-keyword-lexicon (NRC Emotion + VAD + SCL)\n  → aggregate per movie (mean across keywords)\n```\n\n## Column prefix convention\n\n| Prefix | Source |\n|--------|--------|\n| `emolex_` | NRC Emotion Lexicon (binary membership) |\n| `intensity_` | NRC Emotion Intensity Lexicon (0–1 continuous) |\n| `vad_` | NRC VAD Lexicon v2.1 (valence/arousal/dominance, −1 to +1) |\n| `scl_` | SCL-OPP / SCL-NMA (phrase composition) |\n| `movie_` | Movie-level aggregate of keyword scores |\n\n## Key columns\n\n| Column | Description |\n|--------|-------------|\n| `movie_sentiment` | Derived label: positive / neutral / negative (from movie_valence) |\n| `movie_valence` | Primary valence score — mean keyword_valence across all scored keywords |\n| `movie_vad_valence` | Mean NRC VAD valence (−1 to +1) |\n| `movie_vad_arousal` | Mean NRC VAD arousal (−1 to +1) |\n| `movie_vad_dominance` | Mean NRC VAD dominance (−1 to +1) |\n| `movie_intensity_*` | Mean NRC Emotion Intensity per emotion (8 emotions) |\n| `movie_scl_shift` | Mean SCL composition shift (phrase vs token valence divergence) |\n| `movie_scl_coverage` | Fraction of keywords found in SCL lexicon |\n| `quality` | Entry quality: real_confident, real_likely, stub_legitimate, stub_uncertain, spam_likely, spam_confident |\n| `theatrical` | True = theatrical/streaming release (TMDB video=False) |\n\n## Related datasets\n\n- [TMDB Movies — Clean & Current](https://www.kaggle.com/datasets/bdelanghe/tmdb-movies-clean) — source movie corpus\n- [TMDB Keyword Lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) — keyword-level scores\n- [TMDB Movie Keywords Exploded](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-keywords-exploded) — one row per (movie, keyword)\n\n## Source\n\nhttps://github.com/bdelanghe/imdb-kaggle\n\nLexicons by Saif M. Mohammad (NRC Canada): NRC Emotion Lexicon, NRC Emotion Intensity Lexicon, NRC VAD Lexicon v2.1, SCL-OPP, SCL-NMA.",
+  "isPrivate": false,
+  "licenses": [
+    {
+      "name": "CC-BY-NC-SA-4.0"
+    }
+  ],
+  "keywords": [
+    "movies and tv shows",
+    "nlp",
+    "sentiment analysis",
+    "feature engineering"
+  ],
+  "resources": [
+    {
+      "path": "tmdb_movie_scores.csv",
+      "description": "One row per TMDB movie — aggregated keyword valence, emotion intensity, VAD, and SCL scores",
+      "schema": {
+        "fields": [
+          {"name": "id",                    "description": "TMDB movie ID"},
+          {"name": "title",                 "description": "Movie title"},
+          {"name": "quality",               "description": "Entry quality label: real_confident, real_likely, stub_legitimate, stub_uncertain, spam_likely, spam_confident"},
+          {"name": "theatrical",            "description": "True = theatrical/streaming release; False = video/bonus (from TMDB daily export video flag)"},
+          {"name": "movie_sentiment",       "description": "Derived sentiment label: positive (>0.05), neutral (−0.05 to 0.05), negative (<−0.05)"},
+          {"name": "movie_valence",         "description": "Mean keyword_valence across all scored keywords — best available valence per keyword (SCL overrides VAD)"},
+          {"name": "movie_vad_valence",     "description": "Mean NRC VAD valence (−1 to +1)"},
+          {"name": "movie_vad_arousal",     "description": "Mean NRC VAD arousal (−1 to +1)"},
+          {"name": "movie_vad_dominance",   "description": "Mean NRC VAD dominance (−1 to +1)"},
+          {"name": "movie_intensity_anger",       "description": "Mean NRC Emotion Intensity — anger (0–1)"},
+          {"name": "movie_intensity_anticipation","description": "Mean NRC Emotion Intensity — anticipation (0–1)"},
+          {"name": "movie_intensity_disgust",     "description": "Mean NRC Emotion Intensity — disgust (0–1)"},
+          {"name": "movie_intensity_fear",        "description": "Mean NRC Emotion Intensity — fear (0–1)"},
+          {"name": "movie_intensity_joy",         "description": "Mean NRC Emotion Intensity — joy (0–1)"},
+          {"name": "movie_intensity_sadness",     "description": "Mean NRC Emotion Intensity — sadness (0–1)"},
+          {"name": "movie_intensity_surprise",    "description": "Mean NRC Emotion Intensity — surprise (0–1)"},
+          {"name": "movie_intensity_trust",       "description": "Mean NRC Emotion Intensity — trust (0–1)"},
+          {"name": "movie_scl_shift",       "description": "Mean SCL composition shift (phrase vs token divergence)"},
+          {"name": "movie_scl_coverage",    "description": "Fraction of keywords found in SCL lexicon"}
+        ]
+      }
+    }
+  ]
+}
