@@ -2,3 +2,4 @@ kagglehub[pandas-datasets]
 jupyter
 python-dotenv
 nltk
+aiohttp
