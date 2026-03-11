@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Look up TMDB keyword IDs for all keywords in output/tmdb_keyword_lexicon.csv
-using the /3/search/keyword endpoint (exact name match).
+Phase 2: Search API fallback for keywords not in the TMDB daily export.
 
-Much faster than iterating all possible keyword IDs:
-  - Only 67,916 requests (one per unique keyword name) vs ~370K ID probes
-  - Semaphore-based concurrency (40 parallel), 429 backoff
+Reads data/tmdb_keywords_unmatched.txt (produced by scripts/build_tmdb_canonical.py)
+and looks up each keyword via /3/search/keyword?query={name} (exact name match).
 
-Outputs data/tmdb_keywords_canonical.csv (tmdb_keyword_id, name).
-Checkpoints to data/tmdb_keywords_checkpoint.json.
+Run build_tmdb_canonical.py first (Phase 1) to get the unmatched list.
+
+Rate limit: asyncio.Semaphore(20) — conservative, well under TMDB's ~50 req/s limit.
+429 handling: sleep Retry-After + exponential backoff.
+NaN-safe: skips empty or null keyword names.
+
+Appends matched results to data/tmdb_keywords_canonical.csv and updates
+output/tmdb_keyword_lexicon.csv with any newly resolved tmdb_keyword_ids.
 
 Usage:
     .venv/bin/python scripts/crawl_tmdb_keywords.py
@@ -29,7 +33,7 @@ TMDB_TOKEN = os.environ["TMDB_TOKEN"]
 HEADERS = {"Authorization": f"Bearer {TMDB_TOKEN}", "accept": "application/json"}
 SEARCH_URL = "https://api.themoviedb.org/3/search/keyword"
 
-CONCURRENCY = 40          # parallel requests (= TMDB rate limit)
+CONCURRENCY = 20          # parallel requests — conservative, well under TMDB's ~50/s limit
 CHECKPOINT_EVERY = 2_000  # keywords between checkpoint saves
 
 CHECKPOINT_FILE = Path("data/tmdb_keywords_checkpoint.json")
@@ -165,12 +169,55 @@ def join_to_lexicon(canonical_df: pd.DataFrame):
     print(f"Updated {LEXICON_FILE}")
 
 
+def append_to_canonical(new_results: list) -> pd.DataFrame:
+    """Append newly found keywords to canonical CSV (dedup by ID)."""
+    existing = pd.read_csv(OUTPUT_FILE) if OUTPUT_FILE.exists() else pd.DataFrame(columns=["tmdb_keyword_id", "name"])
+    combined = (
+        pd.concat([existing, pd.DataFrame(new_results)], ignore_index=True)
+        .drop_duplicates("tmdb_keyword_id")
+        .sort_values("tmdb_keyword_id")
+        .reset_index(drop=True)
+    )
+    combined.to_csv(OUTPUT_FILE, index=False)
+    print(f"\nCanonical file: {len(combined):,} total keywords → {OUTPUT_FILE}")
+    return combined
+
+
+def update_lexicon_ids(canonical: pd.DataFrame):
+    """Fill in any still-missing tmdb_keyword_id values in the lexicon."""
+    lexicon = pd.read_csv(LEXICON_FILE)
+
+    # Build name→id map from full canonical (export + search results)
+    id_map = dict(zip(canonical["name"].str.lower().str.strip(), canonical["tmdb_keyword_id"]))
+
+    mask = lexicon["tmdb_keyword_id"].isna() & lexicon["keyword"].notna()
+    lexicon.loc[mask, "tmdb_keyword_id"] = (
+        lexicon.loc[mask, "keyword"].str.lower().str.strip().map(id_map)
+    )
+
+    matched = lexicon["tmdb_keyword_id"].notna().sum()
+    total = lexicon["keyword"].notna().sum()
+    print(f"Lexicon coverage: {matched:,} / {total:,} ({matched/total*100:.1f}%)")
+    lexicon.to_csv(LEXICON_FILE, index=False)
+    print(f"Updated {LEXICON_FILE}")
+
+
 if __name__ == "__main__":
-    all_keywords = pd.read_csv(LEXICON_FILE)["keyword"].tolist()
+    unmatched_file = Path("data/tmdb_keywords_unmatched.txt")
+    if not unmatched_file.exists():
+        print("Run scripts/build_tmdb_canonical.py first (Phase 1)")
+        raise SystemExit(1)
+
+    # Load unmatched keyword names (NaN-safe)
+    all_keywords = [
+        kw.strip() for kw in unmatched_file.read_text().splitlines()
+        if kw.strip()
+    ]
+    print(f"Phase 2: {len(all_keywords):,} unmatched keywords to search")
+
     remaining, prior_results = load_checkpoint(all_keywords)
-
     all_results, _ = asyncio.run(crawl(remaining, prior_results))
-    print(f"\nTotal matched: {len(all_results):,} / {len(all_keywords):,}")
+    print(f"\nSearch found: {len(all_results):,} / {len(all_keywords):,}")
 
-    canonical_df = save_output(all_results)
-    join_to_lexicon(canonical_df)
+    canonical = append_to_canonical(all_results)
+    update_lexicon_ids(canonical)
