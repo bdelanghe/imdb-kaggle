@@ -3,21 +3,31 @@ env
 .venv
 .devbox
 "/
-data/
+
+# Ignore generated data by default; NRC/SCL source files and canonical keywords are tracked
+data/*
+data/lexicons/
+!data/NRC-emotion-lexicon-wordlevel-alphabetized-v0.92.txt
+!data/NRC-Emotion-Intensity-Lexicon/
+!data/NRC-Emotion-Intensity-Lexicon/**
+!data/NRC-VAD-Lexicon-v2.1/
+!data/NRC-VAD-Lexicon-v2.1/**
+!data/SCL-OPP/
+!data/SCL-OPP/**
+!data/SCL-NMA/
+!data/SCL-NMA/**
+!data/tmdb_keywords_canonical.csv
 
 # Dolt database files (added by bd init)
 .dolt/
 .beads/dolt-*
 *.db
 
-# Large output files — Kaggle is the source of truth
-# https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores
+# Large output CSV/zip files — Kaggle is the source of truth
+output/**/*.csv
+output/**/*.zip
 output/*.csv
 output/*.zip
-
-# dataset-metadata.json is tracked (defines schema + column descriptions)
-output/keyword-lexicon/tmdb_keyword_lexicon.csv
-output/scl-joined/scl_joined_lexicon.csv
 
 # IDE config
 .cursor/

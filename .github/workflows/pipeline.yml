@@ -1,14 +1,14 @@
-name: Regenerate and upload dataset
+name: TMDB Keyword SCL Pipeline
 
 on:
-  workflow_dispatch:        # manual trigger
+  workflow_dispatch:
   schedule:
-    - cron: '0 4 1 * *'    # 1st of every month at 04:00 UTC
+    - cron: '0 4 1 * *'   # 1st of every month at 04:00 UTC
 
 jobs:
-  run-pipeline:
+  pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
 
     steps:
       - uses: actions/checkout@v4
@@ -22,30 +22,114 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Download NLTK data
-        run: python -c "import nltk; nltk.download('wordnet')"
+        run: python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
 
-      - name: Build lexicon pickle
+      # ── Refresh TMDB source data ────────────────────────────────────────
+      - name: Download TMDB daily exports
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+        run: python scripts/download_tmdb_exports.py
+
+      - name: Build canonical keyword list
+        run: python scripts/build_tmdb_canonical.py
+
+      - name: Fetch new / updated movies from TMDB API
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+        run: python scripts/fetch_new_movies.py
+
+      - name: Strip keywords not in canonical snapshot
+        run: |
+          python3 - <<'EOF'
+          import pandas as pd
+          df    = pd.read_csv("data/tmdb_movies_clean.csv", low_memory=False)
+          canon = set(pd.read_csv("data/tmdb_keywords_canonical.csv")["name"].str.lower().str.strip())
+
+          def filter_keywords(cell):
+              if not isinstance(cell, str) or not cell.strip():
+                  return None
+              kept = [kw for kw in cell.split(", ") if kw.strip().lower() in canon]
+              return ", ".join(kept) if kept else None
+
+          before = df["keywords"].notna().sum()
+          df["keywords"] = df["keywords"].apply(filter_keywords)
+          after  = df["keywords"].notna().sum()
+          print(f"Movies with keywords: {before:,} -> {after:,}")
+          df.to_csv("data/tmdb_movies_clean.csv", index=False)
+          EOF
+
+      - name: Copy movies clean to output dir
+        run: |
+          mkdir -p output/tmdb-movies-clean
+          cp data/tmdb_movies_clean.csv output/tmdb-movies-clean/tmdb_movies_clean.csv
+
+      # ── Core pipeline: 04 → 06 → 07 → 08 ──────────────────────────────
+      - name: 04 — Build keyword lexicon (NRC emotion + VAD scores per keyword)
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
-          jupyter nbconvert --to notebook --execute --inplace 01_lexicons.ipynb \
-            --ExecutePreprocessor.timeout=120
-
-      - name: Score movies and export CSV
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
-        run: |
-          jupyter nbconvert --to notebook --execute --inplace 02_score_and_export.ipynb \
+          jupyter nbconvert --to notebook --execute --inplace 04_keyword_lexicon.ipynb \
             --ExecutePreprocessor.timeout=600
 
-      - name: Upload dataset version to Kaggle
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      - name: 06 — Build SCL joined lexicon (OPP + NMA + VAD hierarchy)
         run: |
-          kaggle datasets version -p output -m "Automated monthly refresh $(date +%Y-%m-%d)"
+          jupyter nbconvert --to notebook --execute --inplace 06_scl_join.ipynb \
+            --ExecutePreprocessor.timeout=300
 
-      - name: Push analysis notebook to Kaggle
+      - name: 07 — Score keyword valence + classify types (exclude_from_scl)
+        run: |
+          jupyter nbconvert --to notebook --execute --inplace 07_keyword_valence.ipynb \
+            --ExecutePreprocessor.timeout=300
+
+      - name: 08 — Join movies with keyword scores + aggregate per movie
+        run: |
+          jupyter nbconvert --to notebook --execute --inplace 08_movie_keyword_join.ipynb \
+            --ExecutePreprocessor.timeout=600
+
+      # ── Push all datasets to Kaggle ─────────────────────────────────────
+      - name: Push TMDB movies clean
         env:
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
-          kaggle kernels push -p .
+          kaggle datasets version \
+            -p output/tmdb-movies-clean \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
+      - name: Push keyword lexicon
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          kaggle datasets version \
+            -p output/keyword-lexicon \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
+      - name: Push SCL joined lexicon
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          kaggle datasets version \
+            -p output/scl-joined \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
+      - name: Push movie keyword scores
+        env:
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+        run: |
+          kaggle datasets version \
+            -p output/movie-keyword-scores \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
+      # ── Commit executed notebooks back to repo ──────────────────────────
+      - name: Commit executed notebooks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '04_keyword_lexicon.ipynb' '06_scl_join.ipynb' \
+                  '07_keyword_valence.ipynb' '08_movie_keyword_join.ipynb'
+          git diff --staged --quiet || \
+            git commit -m "chore: pipeline run $(date +%Y-%m-%d) [skip ci]"
+          git push

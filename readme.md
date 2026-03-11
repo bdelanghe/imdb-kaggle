@@ -1,151 +1,180 @@
-# tmdb-nrc-emotional-intensity-movie-keywords
+# TMDB Keyword SCL Pipeline
 
-A pipeline that combines the [TMDB movies dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (~1.38M movies) with three NRC affective lexicons to produce per-movie emotion and sentiment scores derived from plot keywords.
-
-**Output dataset:** [kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores)
-
-**Analysis notebook:** [kaggle.com/code/bdelanghe/exploring-emotional-profiles-in-1-38m-tmdb-movies](https://www.kaggle.com/code/bdelanghe/exploring-emotional-profiles-in-1-38m-tmdb-movies)
+A pipeline that scores TMDB movie keywords using the [SCL (Sentiment Composition Lexicon)](https://www.saifmohammad.com/WebPages/SCL.html) hierarchy and aggregates the results to per-movie valence profiles. The pipeline runs monthly via GitHub Actions and publishes four Kaggle datasets.
 
 ---
 
-## What it produces
+## Kaggle Datasets
 
-39 columns per movie — all 24 original TMDB columns plus 15 derived columns:
-
-| Column | Source | Description |
-|--------|--------|-------------|
-| `positive_keywords` | derived | Keywords with NRC VAD v2.1 valence >= 0 |
-| `negative_keywords` | derived | Keywords with NRC VAD v2.1 valence < 0 |
-| `unknown_keywords` | derived | Keywords with no NRC VAD coverage |
-| `sentiment` | derived | positive / negative / neutral / unknown |
-| `valence` | NRC VAD v2.1 | positivity of keyword associations (-1 to +1) |
-| `arousal` | NRC VAD v2.1 | energy/activation level (-1 to +1) |
-| `dominance` | NRC VAD v2.1 | sense of control/power (-1 to +1) |
-| `anger` | NRC Intensity | mean anger intensity across keywords (0–1) |
-| `anticipation` | NRC Intensity | mean anticipation intensity (0–1) |
-| `disgust` | NRC Intensity | mean disgust intensity (0–1) |
-| `fear` | NRC Intensity | mean fear intensity (0–1) |
-| `joy` | NRC Intensity | mean joy intensity (0–1) |
-| `sadness` | NRC Intensity | mean sadness intensity (0–1) |
-| `surprise` | NRC Intensity | mean surprise intensity (0–1) |
-| `trust` | NRC Intensity | mean trust intensity (0–1) |
-
-Column order in CSV: `id, title, keywords, positive_keywords, negative_keywords, unknown_keywords, sentiment, valence, arousal, dominance, anger … trust`, then remaining TMDB metadata.
-
-**VAD scale:** bipolar -1 to +1 (0 = neutral). Sentiment: `valence > 0` → positive, `valence < 0` → negative. Keyword groups use same threshold.
-
-**Coverage:** ~1.24M movies (adult-labeled films excluded) — ~23% have keyword coverage and receive emotion scores. The remaining ~77% are scored `unknown` (no TMDB keywords). Adult movies (`adult=True` in TMDB, ~10% of the raw dataset) are excluded from the published output.
+| Dataset | Description |
+|---------|-------------|
+| [tmdb-movies-clean](https://www.kaggle.com/datasets/bdelanghe/tmdb-movies-clean) | ~280K TMDB movies, deduplicated and keyword-filtered against the canonical keyword list |
+| [tmdb-keyword-lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) | 84K keywords with SCL valence, keyword type enum, and `exclude_from_scl` flag |
+| [scl-joined-lexicon](https://www.kaggle.com/datasets/bdelanghe/scl-joined-lexicon) | NRC VAD v2.1 + SCL-OPP + SCL-NMA joined on term, with full composition analysis |
+| [tmdb-movie-keyword-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-keyword-scores) | One row per movie -- SCL-filtered keyword valence aggregates |
 
 ---
 
-## Docs
-
-- [NRC VAD Lexicon v2 explainer](docs/nrc-vad-lexicon.md) — what valence, arousal, and dominance mean, how the scores were created, reliability, and caveats
-
----
-
-## Lexicons used
-
-| Lexicon | Words | Dimensions | Link |
-|---------|-------|------------|------|
-| NRC Emotion Lexicon (EmoLex) | 14,182 | binary (8 emotions + pos/neg) | [link](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm) |
-| NRC Emotion Intensity Lexicon | 5,891 | continuous 0–1 (8 emotions) | [link](https://saifmohammad.com/WebPages/AffectIntensity.htm) |
-| NRC VAD Lexicon v2.1 | 54,801 (unigrams + MWEs) | bipolar -1 to +1 (valence, arousal, dominance) | [link](https://saifmohammad.com/WebPages/nrc-vad.html) |
-
-All lexicons by Saif M. Mohammad, National Research Council Canada. Full index: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)
-
----
-
-## Data provenance
+## Pipeline Overview
 
 ```
-TMDb API  (themoviedb.org)
-  → ~1.38M movie records fetched via /3/movie/{id} REST endpoint
-  → flattened to 24-column CSV by asaniczka
-  → published: kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies
+TMDB API
+  -> tmdb_movies_clean.csv          (scripts/fetch_new_movies.py)
+  -> tmdb_keywords_canonical.csv    (scripts/build_tmdb_canonical.py)
 
-TMDb CSV  (keywords column)
-  → this pipeline extracts the keywords field only
-  → scores each unique keyword against three NRC lexicons
-  → aggregates keyword scores per movie
+NRC VAD v2.1 + SCL-OPP + SCL-NMA
+  -> 06_scl_join.ipynb              SCL joined lexicon (OPP > NMA > VAD hierarchy)
 
-Output: kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores
+TMDB keywords x SCL joined lexicon
+  -> 04_keyword_lexicon.ipynb       NRC emotion + VAD scores per keyword (67K)
+  -> 07_keyword_valence.ipynb       SCL valence + keyword_type + exclude_from_scl (84K)
+  -> 08_movie_keyword_join.ipynb    Explode + join + aggregate per movie (246K movies)
 ```
-
-TMDb data is sourced from [The Movie Database](https://www.themoviedb.org/) via their public API. Attribution required per [TMDb API terms](https://www.themoviedb.org/api-terms-of-use). The upstream Kaggle dataset (`asaniczka/tmdb-movies-dataset-2023-930k-movies`) is refreshed daily from the TMDb API.
 
 ---
 
-## Pipeline
+## Notebooks
 
-```
-TMDB keywords (comma-separated phrases)
-  → tokenize on whitespace / hyphens
-  → lemmatize (NLTK WordNetLemmatizer, noun / verb / adj POS)
-  → look up each lemma in NRC intensity + VAD dicts
-  → average matched token scores per keyword
-  → average keyword scores per movie
-```
+### `04_keyword_lexicon.ipynb` -- NRC scores per keyword
 
-**Notebooks:**
-- `01_lexicons.ipynb` — load NRC files, build lookup dicts, save `data/lexicons/nrc_lookups.pkl` (run once)
-- `02_score_and_export.ipynb` — load TMDB + pickle, score all movies, write CSV, upload to Kaggle
-- `kaggle_notebook.ipynb` — analysis notebook published to Kaggle; genre VAD profiles, top films by emotion, visualizations
+Scores each unique TMDB keyword phrase against three NRC lexicons:
+- **EmoLex** -- binary 0/1 per emotion + positive/negative (union across tokens)
+- **Emotion Intensity** -- continuous 0-1 per emotion (mean across tokens)
+- **VAD v2.1** -- valence/arousal/dominance bipolar -1 to +1 (MWE-first, then token mean)
 
-**Performance:** ~408K movies/sec on 1.38M rows (~3.5s total), 828 MB peak RAM.
+Output: `output/keyword-lexicon/tmdb_keyword_lexicon.csv`
 
-**Automation:** `.github/workflows/pipeline.yml` runs the full pipeline on a monthly schedule and on manual dispatch. Requires `KAGGLE_API_TOKEN` set as a repository secret.
+### `06_scl_join.ipynb` -- SCL joined lexicon
+
+Full outer join of NRC VAD v2.1, SCL-OPP (opposing polarity phrases), and SCL-NMA
+(negator/modal/adverb constructions) on `term`. Valence hierarchy: OPP > NMA > VAD.
+Adds composition shift analysis -- how much a phrase's empirical score deviates from
+naive token averaging.
+
+Output: `output/scl-joined/scl_joined_lexicon.csv`
+
+### `07_keyword_valence.ipynb` -- SCL valence + keyword type classification
+
+Scores all 84K canonical TMDB keywords against the SCL joined lexicon using phrase-first
+lookup with token-mean fallback. Adds two classification columns:
+
+**`keyword_type`** -- enum classifying each keyword's role:
+
+| type | description | exclude_from_scl |
+|------|-------------|:---:|
+| `structural` | TMDB-approved trivia: stingers, sequel, remake, flashback, woman director | yes |
+| `source_material` | Adaptation origin: "based on novel", "based on true story" | yes |
+| `adult` | Primary adult/pornographic content keyword | yes |
+| `time_period` | Temporal setting: 1970s, 19th century, world war ii | yes |
+| `setting_place` | Geographic setting: france, new york city, california | yes |
+| `film_form` | Technical/format descriptor: short film, found footage, mockumentary | yes |
+| `identity_social` | Social/identity topic: lgbt, racism, feminism, coming of age | yes |
+| `genre_label` | Genre-adjacent label: film noir, satire, anime, horror | yes |
+| `character` | Narrative archetype: vampire, detective, serial killer | |
+| `theme` | Core narrative emotion: love, revenge, grief, betrayal | |
+| `other` | Unclassified long-tail keywords | |
+
+**`is_adult`** -- broad explicit content flag (superset of `adult` type).
+
+**`exclude_from_scl`** -- True for types where SCL valence reflects word connotation
+rather than narrative emotional content. See notebook for per-type rationale.
+
+Output: `output/keyword-lexicon/tmdb_keyword_lexicon.csv`
+
+### `08_movie_keyword_join.ipynb` -- Movie x keyword join and aggregate
+
+Explodes each movie's keyword list to one row per (movie, keyword), joins the keyword
+lexicon, then aggregates back to one row per movie. Valence stats are computed **only
+over `exclude_from_scl = False` keywords** -- the full keyword set is always retained
+in the exploded output for downstream use.
+
+| column | description |
+|--------|-------------|
+| `total_keywords` | All keywords for this movie |
+| `excluded_keyword_count` | Keywords removed by `exclude_from_scl` filter |
+| `matched_keyword_count` | SCL-eligible keywords with a valence score |
+| `avg_keyword_valence` | Mean valence -- the movie's narrative sentiment signal |
+| `min/max_keyword_valence` | Sentiment range |
+| `valence_std` | Spread -- high = tonally mixed |
+| `shift_strong_count` | Keywords with strong compositional surprise |
+| `composition_type_dominant` | Dominant linguistic mechanism (direct/opposing_polarity/idiomatic) |
+
+Output: `output/movie-keyword-scores/movie_keyword_scores.csv`
 
 ---
 
-## Methodological notes
+## Why exclude metadata keywords from SCL aggregation
 
-Scores represent **perceived emotional word associations** — not ground-truth movie sentiment. See: Mohammad (2020), [Practical and Ethical Considerations in the Effective use of Emotion and Sentiment Lexicons](https://www.saifmohammad.com/WebDocs/EmoLex-Ethics-Data-Statement.pdf).
+SCL valence is designed to score **narrative emotional content**. Many TMDB keywords
+are metadata tags that describe production origin, era, geography, or format rather than
+story emotion. Applying SCL to these produces spurious signals:
 
-- Scores are **relative, not absolute** — valence 0.3 means "more positive than -0.3", not "30% positive" (bipolar scale -1 to +1)
-- **Association ≠ denotation** — "party" associates with joy but does not mean joy
-- ~77% of rows have no TMDB keywords and are scored as `unknown`. VAD uses NRC VAD Lexicon v2.1 (released March 2025) with MWE phrase lookup.
-- **Bipolar composition caveat** — when a keyword isn't in the MWE list it's tokenized and token scores are averaged. On a bipolar scale this can wash out signal for phrases not in the lexicon (e.g. "not happy" averages a negative and a positive rather than composing correctly). See: Mohammad et al., [Sentiment Composition of Words with Opposing Polarities](https://www.saifmohammad.com/WebPages/SCL.html).
+- `spain` = +0.67 (word sounds pleasant -- nothing to do with what happens in films set there)
+- `horror` = -0.91 (genre label, not a plot emotion -- many horror films are enjoyed positively)
+- `based on novel` = +0.28 (token-averaging "based"+"on"+"novel" produces noise)
+- `disability` = -0.85 (word connotation pathologizes the subject, not the film's tone)
 
-Correct interpretation: *"Movies with these keywords contain more joy-associated language"* — not *"this movie is joyful."*
+The `character` and `theme` types (`serial killer`, `revenge`, `grief`) have genuine
+narrative emotional weight and are retained.
+
+---
+
+## Lexicons
+
+| Lexicon | Entries | Scale | Source |
+|---------|---------|-------|--------|
+| NRC EmoLex | 14,182 words | binary 0/1, 8 emotions + pos/neg | [link](https://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm) |
+| NRC Emotion Intensity | 5,891 words | continuous 0-1, 8 emotions | [link](https://saifmohammad.com/WebPages/AffectIntensity.htm) |
+| NRC VAD v2.1 | 54,801 (unigrams + MWEs) | bipolar -1 to +1 | [link](https://saifmohammad.com/WebPages/nrc-vad.html) |
+| SCL-OPP | 1,178 phrases | bipolar -1 to +1 | [link](https://www.saifmohammad.com/WebPages/SCL.html) |
+| SCL-NMA | 3,207 constructions | bipolar -1 to +1 | [link](https://www.saifmohammad.com/WebPages/SCL.html) |
+
+All lexicons by Saif M. Mohammad, National Research Council Canada.
 
 ---
 
 ## Quickstart
 
 ```bash
-cp .env.example .env        # add KAGGLE_API_TOKEN
+cp .env.example .env        # set KAGGLE_API_TOKEN and TMDB_TOKEN
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
-# Step 1 — build lexicon pickle (once)
-jupyter nbconvert --to notebook --execute 01_lexicons.ipynb
+# Build SCL joined lexicon (one-time or on lexicon update)
+jupyter nbconvert --to notebook --execute --inplace 06_scl_join.ipynb
 
-# Step 2 — score all movies + export CSV
-jupyter nbconvert --to notebook --execute 02_score_and_export.ipynb
+# Build keyword lexicon with NRC scores
+jupyter nbconvert --to notebook --execute --inplace 04_keyword_lexicon.ipynb
 
-# Step 3 — upload to Kaggle
-kaggle datasets version -p output -m "your message"
+# Score keyword valence + classify types
+jupyter nbconvert --to notebook --execute --inplace 07_keyword_valence.ipynb
 
-# Step 4 — push analysis notebook
-kaggle kernels push -p .
+# Join with movies and aggregate
+jupyter nbconvert --to notebook --execute --inplace 08_movie_keyword_join.ipynb
 ```
 
-Output CSV is **not tracked in git** — Kaggle is the source of truth.
+The GitHub Actions workflow (`.github/workflows/pipeline.yml`) runs the full pipeline
+monthly and pushes all four datasets to Kaggle. Requires `KAGGLE_API_TOKEN` and
+`TMDB_TOKEN` as repository secrets.
+
+---
+
+## Data Provenance
+
+```
+TMDb API (themoviedb.org)
+  -> ~280K movie records via /3/movie/{id}
+  -> scripts/fetch_new_movies.py
+  -> data/tmdb_movies_clean.csv
+
+TMDB keyword exports (daily export files)
+  -> scripts/download_tmdb_exports.py + build_tmdb_canonical.py
+  -> data/tmdb_keywords_canonical.csv (84K canonical keywords with TMDB IDs)
+```
+
+TMDb data sourced from [The Movie Database](https://www.themoviedb.org/) per [TMDb API terms](https://www.themoviedb.org/api-terms-of-use).
 
 ---
 
 ## License
 
-This dataset is released under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) — the same non-commercial share-alike restriction as the upstream NRC lexicons by Saif M. Mohammad (National Research Council Canada). You may use and share it freely for non-commercial purposes with attribution.
-
-Source data: [TMDB Movies Dataset](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) — check upstream license for TMDB data terms.
-
----
-
-## Future work / related lexicons
-
-- [Warriner VAD](https://link.springer.com/article/10.3758/s13428-012-0314-x) — 13,915 human-rated lemmas, strong validation source for NRC VAD
-- [ANEW](https://pdodds.w3.uvm.edu/teaching/courses/2009-08UVM-300/docs/others/everything/bradley1999a.pdf) — classic VAD norms
-- [LIWC](https://www.liwc.app) — category-based psycholinguistic features
-- [SenticNet](https://sentic.net) — concept-level sentiment for multi-word phrases
-- [MovieLens Tag Genome](https://grouplens.org/datasets/movielens/tag-genome-2021/) — semantic movie tags with relevance scores
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) -- matching the upstream NRC lexicon license. Free for non-commercial use with attribution.

@@ -1,0 +1,38 @@
+{
+  "title": "TMDB Movie Keyword SCL Scores",
+  "id": "bdelanghe/tmdb-movie-keyword-scores",
+  "licenses": [{ "name": "CC-BY-NC-SA-4.0" }],
+  "subtitle": "246K movies with SCL-filtered keyword valence aggregates",
+  "description": "One row per TMDB movie. Keyword valence is aggregated using the SCL (Sentiment Composition Lexicon) hierarchy — OPP > NMA > VAD — and filtered to exclude metadata keywords (place names, time periods, genre labels, source material, structural trivia, adult content) that carry word-level connotation rather than narrative emotional content.\n\n## Pipeline\n\n```\nTMDB movies (bdelanghe/tmdb-movies-clean)\n  → explode keywords (1 row per movie×keyword)\n  → join keyword lexicon (bdelanghe/tmdb-keyword-lexicon)\n  → filter exclude_from_scl = False\n  → aggregate per movie\n```\n\n## Columns\n\n| column | description |\n|--------|-------------|\n| `id` | TMDB movie ID |\n| `title` | Movie title |\n| `release_date` | Release date |\n| `vote_average` | TMDB user rating |\n| `vote_count` | Number of votes |\n| `popularity` | TMDB popularity score |\n| `genres` | Comma-separated genre list |\n| `total_keywords` | All keywords attached to this movie |\n| `excluded_keyword_count` | Keywords excluded from SCL aggregation (metadata/structural) |\n| `matched_keyword_count` | SCL-eligible keywords with a valence score |\n| `keyword_match_rate` | matched / (total − excluded) |\n| `avg_keyword_valence` | Mean valence across SCL-eligible matched keywords (bipolar −1 to +1) |\n| `min_keyword_valence` | Most negative single keyword |\n| `max_keyword_valence` | Most positive single keyword |\n| `valence_std` | Spread of keyword sentiment — high = tonally mixed |\n| `in_scl_count` | Keywords with exact SCL phrase scores |\n| `has_nma_count` | Keywords containing a negator, modal, or adverb |\n| `shift_strong_count` | Keywords where phrase valence diverges strongly from token average |\n| `avg_composition_shift` | Mean compositional surprise across in-SCL keywords |\n| `max_abs_composition_shift` | Strongest single compositional shift in the keyword set |\n| `composition_type_dominant` | Most common linguistic mechanism (direct, opposing_polarity, idiomatic, …) |\n\n## Keyword type filter\n\nSee `bdelanghe/tmdb-keyword-lexicon` for the full keyword taxonomy. The `exclude_from_scl` flag excludes: `structural`, `source_material`, `adult`, `time_period`, `setting_place`, `film_form`, `identity_social`, `genre_label`. Retained for valence: `character`, `theme`, `other`.\n\n## Source\n\nBuilt by [bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle). SCL lexicons by Saif M. Mohammad (NRC Canada).",
+  "resources": [
+    {
+      "path": "movie_keyword_scores.csv",
+      "description": "One row per TMDB movie with SCL-filtered keyword valence aggregate",
+      "schema": {
+        "fields": [
+          { "name": "id",                          "description": "TMDB movie ID" },
+          { "name": "title",                       "description": "Movie title" },
+          { "name": "release_date",                "description": "Release date (YYYY-MM-DD)" },
+          { "name": "vote_average",                "description": "TMDB weighted average rating" },
+          { "name": "vote_count",                  "description": "Number of user ratings" },
+          { "name": "popularity",                  "description": "TMDB popularity score" },
+          { "name": "genres",                      "description": "Comma-separated genre list" },
+          { "name": "total_keywords",              "description": "Total keyword count for this movie" },
+          { "name": "excluded_keyword_count",      "description": "Keywords excluded by exclude_from_scl filter" },
+          { "name": "matched_keyword_count",       "description": "SCL-eligible keywords with a valence score" },
+          { "name": "keyword_match_rate",          "description": "matched / (total - excluded)" },
+          { "name": "avg_keyword_valence",         "description": "Mean valence across SCL-eligible keywords (bipolar -1 to +1)" },
+          { "name": "min_keyword_valence",         "description": "Most negative keyword valence" },
+          { "name": "max_keyword_valence",         "description": "Most positive keyword valence" },
+          { "name": "valence_std",                 "description": "Std dev of keyword valences — high = tonally mixed" },
+          { "name": "in_scl_count",                "description": "Keywords with exact SCL phrase match" },
+          { "name": "has_nma_count",               "description": "Keywords with negator/modal/adverb" },
+          { "name": "shift_strong_count",          "description": "Keywords with abs_composition_shift >= 0.30" },
+          { "name": "avg_composition_shift",       "description": "Mean compositional shift across in-SCL keywords" },
+          { "name": "max_abs_composition_shift",   "description": "Strongest single compositional shift" },
+          { "name": "composition_type_dominant",   "description": "Dominant linguistic mechanism (direct/opposing_polarity/idiomatic/...)" }
+        ]
+      }
+    }
+  ]
+}
