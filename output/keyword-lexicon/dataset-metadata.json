@@ -1,13 +1,13 @@
 {
-  "title": "TMDB Keyword Lexicon \u2014 NRC Emotion + VAD Scores",
+  "title": "TMDB Keyword Lexicon — NRC Emotion + VAD + SCL Valence Scores",
   "id": "bdelanghe/tmdb-keyword-lexicon",
   "licenses": [
     {
       "name": "CC-BY-NC-SA-4.0"
     }
   ],
-  "subtitle": "67,916 unique TMDB keywords scored against 3 NRC affective lexicons",
-  "description": "One row per unique keyword phrase from the TMDB movies dataset (~1.24M theatrical releases), joined to all three NRC affective lexicons by Saif M. Mohammad (NRC Canada).\n\n## Columns (26 total)\n\n| Column | Description |\n|---|---|\n| `keyword` | Raw TMDB keyword phrase |\n| `n_movies` | Number of TMDB movies using this keyword |\n| `emolex_found` | Found in NRC Emotion Lexicon |\n| `intensity_found` | Found in NRC Emotion Intensity Lexicon |\n| `vad_found` | Found in NRC VAD v2.1 |\n| `emolex_anger` \u2026 `emolex_negative` | Binary union across tokens (8 emotions + pos/neg) |\n| `intensity_anger` \u2026 `intensity_disgust` | Mean intensity across matched tokens (0\u20131) |\n| `vad_valence` | Mean keyword valence, bipolar \u22121 to +1 (NRC VAD v2.1) |\n| `vad_arousal` | Mean keyword arousal, bipolar \u22121 to +1 |\n| `vad_dominance` | Mean keyword dominance, bipolar \u22121 to +1 |\n\n## Lexicon rules\n\n- **EmoLex (binary):** union across tokens \u2014 if any token has `fear=1`, the keyword gets `emolex_fear=1`\n- **Intensity:** mean across matched tokens (token-level lemmatization via NLTK WordNet)\n- **VAD v2.1:** full-phrase MWE lookup first (e.g. \"child abuse\" \u2192 \u22120.566 directly), then falls back to token mean\n\n## Coverage\n\n| Lexicon | Keywords matched | % |\n|---|---|---|\n| NRC Emotion Lexicon (EmoLex) | 37,678 | 55.5% |\n| NRC Emotion Intensity | 21,405 | 31.5% |\n| NRC VAD v2.1 | 44,606 | 65.7% |\n\n## Data provenance\n\nKeywords extracted from: [asaniczka/tmdb-movies-dataset-2023-930k-movies](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (sourced from TMDb API). Adult-labeled movies excluded.\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\n## Known limitation\n\nToken-level averaging on a bipolar scale is lossy for phrases not in the VAD MWE list. See: Mohammad et al., [Sentiment Composition of Words with Opposing Polarities (SCL)](https://www.saifmohammad.com/WebPages/SCL.html).\n\n## Related datasets\n\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) \u2014 movie-level aggregation of these keyword scores\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
+  "subtitle": "67,916 TMDB keywords scored against NRC affect lexicons + SCL phrase-level valence hierarchy",
+  "description": "One row per unique keyword phrase from the TMDB movies dataset (~1.24M theatrical releases), joined to NRC affective lexicons and SCL sentiment composition lexicons by Saif M. Mohammad (NRC Canada).\n\n## What's new in v2\n\nAdded phrase-level valence columns from the Sentiment Composition Lexicons (SCL):\n\n- **SCL-OPP** — opposing-polarity phrases (e.g. `happy accident`, `bad luck`)\n- **SCL-NMA** — negator/modal/adverb phrases (e.g. `not bad`, `barely good`)\n\nThese are joined using a valence hierarchy that selects the most specific score available:\n\n```\nvalence_source precedence: opp > nma > vad > token_mean\n```\n\nThis fixes the known limitation of token-level averaging for phrases with mixed polarity.\n\n## Columns (32 total)\n\n| Column | Description |\n|---|---|\n| `keyword` | Raw TMDB keyword phrase |\n| `n_movies` | Number of TMDB movies using this keyword |\n| `emolex_found` | Found in NRC Emotion Lexicon |\n| `intensity_found` | Found in NRC Emotion Intensity Lexicon |\n| `vad_found` | Found in NRC VAD v2.1 |\n| `emolex_anger` … `emolex_negative` | Binary union across tokens (8 emotions + pos/neg) |\n| `intensity_anger` … `intensity_disgust` | Mean intensity across matched tokens (0–1) |\n| `vad_valence` | Mean keyword valence, bipolar −1 to +1 (NRC VAD v2.1, token-mean) |\n| `vad_arousal` | Mean keyword arousal, bipolar −1 to +1 |\n| `vad_dominance` | Mean keyword dominance, bipolar −1 to +1 |\n| `valence` | **Best available valence** following OPP > NMA > VAD > token_mean hierarchy |\n| `valence_source` | Which lexicon supplied the valence (`opp`/`nma`/`vad`/`token_mean`) |\n| `valence_count` | Number of lexicons with a score for this term (0–3) |\n| `valence_variance` | Variance across lexicon scores (null if only 1 source — use as confidence signal) |\n| `matched_tokens` | Tokens with a valence score (relevant for `token_mean` fallback) |\n| `total_tokens` | Total tokens in keyword |\n\n## Lexicon rules\n\n- **EmoLex (binary):** union across tokens — if any token has `fear=1`, the keyword gets `emolex_fear=1`\n- **Intensity:** mean across matched tokens (token-level lemmatization via NLTK WordNet)\n- **VAD v2.1:** full-phrase MWE lookup first, then token mean\n- **SCL-OPP / SCL-NMA:** exact phrase lookup; OPP takes precedence over NMA when both match\n- **token_mean fallback:** mean of hierarchy-selected unigram `valence` scores (not raw VAD)\n\n## Coverage\n\n| Lexicon | Keywords matched | % |\n|---|---|---|\n| NRC Emotion Lexicon (EmoLex) | 37,678 | 55.5% |\n| NRC Emotion Intensity | 21,405 | 31.5% |\n| NRC VAD v2.1 | 44,606 | 65.7% |\n| `valence` (any source) | 38,511 | 56.7% |\n\n## Data provenance\n\nKeywords extracted from: [asaniczka/tmdb-movies-dataset-2023-930k-movies](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (sourced from TMDb API). Adult-labeled movies excluded.\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\nSCL Lexicons: [saifmohammad.com/WebPages/SCL.html](https://www.saifmohammad.com/WebPages/SCL.html)\n\n## Related datasets\n\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) — movie-level aggregation of these keyword scores\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
   "keywords": [
     "nlp",
     "natural-language-processing",
@@ -20,113 +20,41 @@
   "resources": [
     {
       "path": "tmdb_keyword_lexicon.csv",
-      "description": "67,916 unique TMDB keyword phrases with NRC EmoLex binary scores, NRC Emotion Intensity scores, and NRC VAD v2.1 bipolar scores. One row per keyword.",
+      "description": "67,916 unique TMDB keyword phrases with NRC EmoLex, Intensity, VAD v2.1, and SCL phrase-level valence scores. One row per keyword.",
       "schema": {
         "fields": [
-          {
-            "name": "keyword",
-            "description": "Raw TMDB keyword phrase (e.g. 'child abuse', 'space marine')"
-          },
-          {
-            "name": "n_movies",
-            "description": "Number of TMDB movies tagged with this keyword"
-          },
-          {
-            "name": "emolex_found",
-            "description": "True if any token matched NRC Emotion Lexicon"
-          },
-          {
-            "name": "intensity_found",
-            "description": "True if any token matched NRC Emotion Intensity Lexicon"
-          },
-          {
-            "name": "vad_found",
-            "description": "True if phrase or any token matched NRC VAD v2.1"
-          },
-          {
-            "name": "emolex_anger",
-            "description": "NRC EmoLex: 1 if any token associates with anger (binary union)"
-          },
-          {
-            "name": "emolex_anticipation",
-            "description": "NRC EmoLex: 1 if any token associates with anticipation"
-          },
-          {
-            "name": "emolex_disgust",
-            "description": "NRC EmoLex: 1 if any token associates with disgust"
-          },
-          {
-            "name": "emolex_fear",
-            "description": "NRC EmoLex: 1 if any token associates with fear"
-          },
-          {
-            "name": "emolex_joy",
-            "description": "NRC EmoLex: 1 if any token associates with joy"
-          },
-          {
-            "name": "emolex_sadness",
-            "description": "NRC EmoLex: 1 if any token associates with sadness"
-          },
-          {
-            "name": "emolex_surprise",
-            "description": "NRC EmoLex: 1 if any token associates with surprise"
-          },
-          {
-            "name": "emolex_trust",
-            "description": "NRC EmoLex: 1 if any token associates with trust"
-          },
-          {
-            "name": "emolex_positive",
-            "description": "NRC EmoLex: 1 if any token is positive-sentiment"
-          },
-          {
-            "name": "emolex_negative",
-            "description": "NRC EmoLex: 1 if any token is negative-sentiment"
-          },
-          {
-            "name": "intensity_anger",
-            "description": "NRC Intensity: mean anger intensity across matched tokens (0\u20131)"
-          },
-          {
-            "name": "intensity_anticipation",
-            "description": "NRC Intensity: mean anticipation intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_disgust",
-            "description": "NRC Intensity: mean disgust intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_fear",
-            "description": "NRC Intensity: mean fear intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_joy",
-            "description": "NRC Intensity: mean joy intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_sadness",
-            "description": "NRC Intensity: mean sadness intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_surprise",
-            "description": "NRC Intensity: mean surprise intensity (0\u20131)"
-          },
-          {
-            "name": "intensity_disgust",
-            "description": "NRC Intensity: mean disgust intensity (0\u20131)"
-          },
-          {
-            "name": "vad_valence",
-            "description": "NRC VAD v2.1: mean keyword valence, bipolar \u22121 (negative) to +1 (positive). MWE-first lookup."
-          },
-          {
-            "name": "vad_arousal",
-            "description": "NRC VAD v2.1: mean keyword arousal, bipolar \u22121 (calm) to +1 (excited)"
-          },
-          {
-            "name": "vad_dominance",
-            "description": "NRC VAD v2.1: mean keyword dominance, bipolar \u22121 (submissive) to +1 (dominant)"
-          }
+          {"name": "keyword", "description": "Raw TMDB keyword phrase (e.g. 'child abuse', 'space marine')"},
+          {"name": "n_movies", "description": "Number of TMDB movies tagged with this keyword"},
+          {"name": "emolex_found", "description": "True if any token matched NRC Emotion Lexicon"},
+          {"name": "intensity_found", "description": "True if any token matched NRC Emotion Intensity Lexicon"},
+          {"name": "vad_found", "description": "True if phrase or any token matched NRC VAD v2.1"},
+          {"name": "emolex_anger", "description": "NRC EmoLex: 1 if any token associates with anger (binary union)"},
+          {"name": "emolex_anticipation", "description": "NRC EmoLex: 1 if any token associates with anticipation"},
+          {"name": "emolex_disgust", "description": "NRC EmoLex: 1 if any token associates with disgust"},
+          {"name": "emolex_fear", "description": "NRC EmoLex: 1 if any token associates with fear"},
+          {"name": "emolex_joy", "description": "NRC EmoLex: 1 if any token associates with joy"},
+          {"name": "emolex_sadness", "description": "NRC EmoLex: 1 if any token associates with sadness"},
+          {"name": "emolex_surprise", "description": "NRC EmoLex: 1 if any token associates with surprise"},
+          {"name": "emolex_trust", "description": "NRC EmoLex: 1 if any token associates with trust"},
+          {"name": "emolex_positive", "description": "NRC EmoLex: 1 if any token is positive-sentiment"},
+          {"name": "emolex_negative", "description": "NRC EmoLex: 1 if any token is negative-sentiment"},
+          {"name": "intensity_anger", "description": "NRC Intensity: mean anger intensity across matched tokens (0–1)"},
+          {"name": "intensity_anticipation", "description": "NRC Intensity: mean anticipation intensity (0–1)"},
+          {"name": "intensity_disgust", "description": "NRC Intensity: mean disgust intensity (0–1)"},
+          {"name": "intensity_fear", "description": "NRC Intensity: mean fear intensity (0–1)"},
+          {"name": "intensity_joy", "description": "NRC Intensity: mean joy intensity (0–1)"},
+          {"name": "intensity_sadness", "description": "NRC Intensity: mean sadness intensity (0–1)"},
+          {"name": "intensity_surprise", "description": "NRC Intensity: mean surprise intensity (0–1)"},
+          {"name": "intensity_trust", "description": "NRC Intensity: mean trust intensity (0–1)"},
+          {"name": "vad_valence", "description": "NRC VAD v2.1: mean keyword valence, bipolar −1 (negative) to +1 (positive). MWE-first lookup, then token mean."},
+          {"name": "vad_arousal", "description": "NRC VAD v2.1: mean keyword arousal, bipolar −1 (calm) to +1 (excited)"},
+          {"name": "vad_dominance", "description": "NRC VAD v2.1: mean keyword dominance, bipolar −1 (submissive) to +1 (dominant)"},
+          {"name": "valence", "description": "Best available bipolar valence [−1, +1] following OPP > NMA > VAD > token_mean hierarchy"},
+          {"name": "valence_source", "description": "Source of valence: opp (SCL-OPP), nma (SCL-NMA), vad (NRC VAD exact), token_mean (unigram mean fallback)"},
+          {"name": "valence_count", "description": "Number of lexicons (0–3) with a valence score for this term. Higher = more confident."},
+          {"name": "valence_variance", "description": "Variance across lexicon valence scores. Non-null only when valence_count >= 2. High variance = lexicons disagree."},
+          {"name": "matched_tokens", "description": "Number of tokens with a valence score (relevant for token_mean source)"},
+          {"name": "total_tokens", "description": "Total word count of keyword phrase"}
         ]
       }
     }
