@@ -1,0 +1,52 @@
+{
+  "title": "TMDB Movies — Clean & Current",
+  "id": "bdelanghe/tmdb-movies-clean",
+  "subtitle": "1.17M live TMDB movies — deleted entries removed, refreshed daily",
+  "description": "## TMDB Movies — Clean & Current\n\nA cleaned and refreshed version of the TMDB movie corpus.\n\n### What makes this different from other TMDB datasets\n\nThe widely-used [asaniczka TMDB snapshot](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) contains ~1.38M movies, but **214K of those entries (15.5%) have since been deleted from TMDB** — likely spam, duplicates, or test entries. This dataset removes them.\n\n| | Count |\n|--|--|\n| asaniczka snapshot (v11, ~2023) | 1,382,594 |\n| Deleted from TMDB since snapshot | −214,017 |\n| New movies added after snapshot | +1,429 |\n| **This dataset** | **1,169,756** |\n\n### How it's built\n\n1. Download TMDB daily export (`files.tmdb.org/p/exports/movie_ids_*.json.gz`) — the canonical live movie ID list\n2. Filter asaniczka snapshot to movies present in the daily export\n3. Fetch full metadata for the ~1,400 new movies via `/3/movie/{id}?append_to_response=keywords`\n4. Combine and sort by popularity\n\n### Columns\n\nAll 24 original TMDB columns:\n\n`id`, `title`, `original_title`, `release_date`, `popularity`, `vote_average`, `vote_count`, `status`, `runtime`, `budget`, `revenue`, `adult`, `original_language`, `overview`, `tagline`, `genres`, `keywords`, `production_companies`, `production_countries`, `spoken_languages`, `imdb_id`, `backdrop_path`, `poster_path`, `homepage`\n\n### Keyword coverage\n\n- Movies with keywords: ~284K (24.3%)\n- Movies without keywords: ~886K (75.7%)\n\n### Source code\n\nhttps://github.com/bdelanghe/imdb-kaggle\n\n### Related dataset\n\n[TMDB Movie VAD + Emotion Intensity Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) — this dataset scored with NRC emotion lexicons.",
+  "isPrivate": false,
+  "licenses": [
+    {
+      "name": "CC-BY-NC-SA-4.0"
+    }
+  ],
+  "keywords": [
+    "movies and tv shows",
+    "text mining",
+    "nlp",
+    "feature engineering"
+  ],
+  "resources": [
+    {
+      "path": "tmdb_movies_clean.csv",
+      "description": "1.17M TMDB movies — all 24 original columns, filtered to live TMDB entries only.",
+      "schema": {
+        "fields": [
+          {"name": "id",                   "description": "TMDB movie ID"},
+          {"name": "title",                "description": "Movie title"},
+          {"name": "original_title",       "description": "Title in original language"},
+          {"name": "release_date",         "description": "Release date (YYYY-MM-DD)"},
+          {"name": "popularity",           "description": "TMDB popularity score"},
+          {"name": "vote_average",         "description": "Mean user vote score (0–10)"},
+          {"name": "vote_count",           "description": "Number of user votes"},
+          {"name": "status",               "description": "Release status (Released, Post Production, etc.)"},
+          {"name": "runtime",              "description": "Runtime in minutes"},
+          {"name": "budget",               "description": "Production budget in USD"},
+          {"name": "revenue",              "description": "Box office revenue in USD"},
+          {"name": "adult",                "description": "Adult-rated flag (boolean)"},
+          {"name": "original_language",    "description": "Original language code (ISO 639-1)"},
+          {"name": "overview",             "description": "Plot summary"},
+          {"name": "tagline",              "description": "Movie tagline"},
+          {"name": "genres",               "description": "Comma-separated genre names"},
+          {"name": "keywords",             "description": "Comma-separated TMDB plot keywords"},
+          {"name": "production_companies", "description": "Comma-separated production company names"},
+          {"name": "production_countries", "description": "Comma-separated production country names"},
+          {"name": "spoken_languages",     "description": "Comma-separated spoken language names"},
+          {"name": "imdb_id",              "description": "IMDb identifier (tt...)"},
+          {"name": "backdrop_path",        "description": "Backdrop image path on TMDB CDN"},
+          {"name": "poster_path",          "description": "Poster image path on TMDB CDN"},
+          {"name": "homepage",             "description": "Official movie website URL"}
+        ]
+      }
+    }
+  ]
+}
