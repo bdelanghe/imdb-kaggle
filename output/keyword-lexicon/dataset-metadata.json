@@ -1,5 +1,5 @@
 {
-  "title": "TMDB Keyword Lexicon — NRC Emotion + VAD + SCL Valence Scores",
+  "title": "TMDB Keyword Lexicon \u2014 NRC Emotion + VAD + SCL Valence Scores",
   "id": "bdelanghe/tmdb-keyword-lexicon",
   "licenses": [
     {
@@ -7,7 +7,7 @@
     }
   ],
   "subtitle": "67,916 TMDB keywords with NRC + SCL phrase-level valence",
-  "description": "One row per unique keyword phrase from the TMDB movies dataset (~1.24M theatrical releases), joined to NRC affective lexicons and SCL sentiment composition lexicons by Saif M. Mohammad (NRC Canada).\n\n## What's new in v3\n\nAdded SCL coverage and NMA modifier flags:\n\n- **`in_scl`** — True if the keyword phrase has an exact match in the SCL joined lexicon (OPP, NMA, or VAD)\n- **`scl_token_coverage`** — fraction of keyword tokens found in SCL unigrams (0.0–1.0)\n- **`valence_scale`** — `bipolar` when valence is not null; confirms all sources use Best-Worst Scaling [-1, +1]\n- **`valence_source`** — now uses `computed` (instead of `token_mean`) for token-mean fallback\n- **`negators_contained`** — semicolon-separated negator tokens found in keyword (e.g. `not`, `never`, `no`)\n- **`modals_contained`** — semicolon-separated modal tokens (e.g. `can`, `should`, `might`)\n- **`adverbs_contained`** — semicolon-separated intensifier/diminisher adverbs (e.g. `very`, `barely`)\n- **`has_nma`** — True if any negator, modal, or adverb is present\n\n## What's new in v2\n\nAdded phrase-level valence columns from the Sentiment Composition Lexicons (SCL):\n\n- **SCL-OPP** — opposing-polarity phrases (e.g. `happy accident`, `bad luck`)\n- **SCL-NMA** — negator/modal/adverb phrases (e.g. `not bad`, `barely good`)\n\nThese are joined using a valence hierarchy that selects the most specific score available:\n\n```\nvalence_source precedence: opp > nma > vad > computed\n```\n\nThis fixes the known limitation of token-level averaging for phrases with mixed polarity.\n\n## Columns (39 total)\n\n| Column | Description |\n|---|---|\n| `keyword` | Raw TMDB keyword phrase |\n| `n_movies` | Number of TMDB movies using this keyword |\n| `emolex_found` | Found in NRC Emotion Lexicon |\n| `intensity_found` | Found in NRC Emotion Intensity Lexicon |\n| `vad_found` | Found in NRC VAD v2.1 |\n| `emolex_anger` … `emolex_negative` | Binary union across tokens (8 emotions + pos/neg) |\n| `intensity_anger` … `intensity_disgust` | Mean intensity across matched tokens (0–1) |\n| `vad_valence` | Mean keyword valence, bipolar −1 to +1 (NRC VAD v2.1, token-mean) |\n| `vad_arousal` | Mean keyword arousal, bipolar −1 to +1 |\n| `vad_dominance` | Mean keyword dominance, bipolar −1 to +1 |\n| `in_scl` | True if keyword is an exact phrase in the SCL joined lexicon |\n| `scl_token_coverage` | Fraction of keyword tokens (0.0–1.0) found as SCL unigrams |\n| `valence` | **Best available valence** — bipolar [-1, +1] — following OPP > NMA > VAD > computed hierarchy |\n| `valence_scale` | `bipolar` when valence is not null. All sources use Best-Worst Scaling [-1, +1]. |\n| `valence_source` | Which source supplied the valence: `opp` / `nma` / `vad` (direct SCL) or `computed` (token mean) |\n| `valence_count` | Number of SCL lexicons with a score (0–3). Higher = more confident. |\n| `valence_variance` | Variance across lexicon scores (null if < 2 sources — use as confidence signal) |\n| `matched_tokens` | Tokens with a valence score (relevant for `computed` source) |\n| `total_tokens` | Total tokens in keyword |\n| `negators_contained` | Semicolon-separated negator tokens in keyword (e.g. `not;never`) |\n| `modals_contained` | Semicolon-separated modal tokens in keyword (e.g. `can;should`) |\n| `adverbs_contained` | Semicolon-separated intensifier/diminisher adverbs (e.g. `very;barely`) |\n| `has_nma` | True if any negator, modal, or adverb is present in the keyword |\n\n## Lexicon rules\n\n- **EmoLex (binary):** union across tokens — if any token has `fear=1`, the keyword gets `emolex_fear=1`\n- **Intensity:** mean across matched tokens (token-level lemmatization via NLTK WordNet)\n- **VAD v2.1:** full-phrase MWE lookup first, then token mean\n- **SCL-OPP / SCL-NMA:** exact phrase lookup; OPP takes precedence over NMA when both match\n- **`computed` fallback:** mean of hierarchy-selected unigram `valence` scores (not raw VAD) — OPP/NMA scores propagate through token fallback\n\n## Coverage\n\n| Lexicon | Keywords matched | % |\n|---|---|---|\n| NRC Emotion Lexicon (EmoLex) | 37,678 | 55.5% |\n| NRC Emotion Intensity | 21,405 | 31.5% |\n| NRC VAD v2.1 | 44,606 | 65.7% |\n| `valence` (any source) | 38,511 | 56.7% |\n| SCL exact match (`in_scl`) | 11,649 | 17.2% |\n| Keywords with NMA context (`has_nma`) | 190 | 0.3% |\n\n## Data provenance\n\nKeywords extracted from: [asaniczka/tmdb-movies-dataset-2023-930k-movies](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (sourced from TMDb API). Adult-labeled movies excluded.\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\nSCL Lexicons: [saifmohammad.com/WebPages/SCL.html](https://www.saifmohammad.com/WebPages/SCL.html)\n\n## Related datasets\n\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) — movie-level aggregation of these keyword scores\n- [SCL Joined Lexicon](https://www.kaggle.com/datasets/bdelanghe/scl-joined-lexicon) — the underlying NRC VAD + OPP + NMA join used to produce these scores\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
+  "description": "One row per unique keyword phrase from the TMDB movies dataset (~1.24M theatrical releases), joined to NRC affective lexicons and SCL sentiment composition lexicons by Saif M. Mohammad (NRC Canada).\n\n## What's new in v4\n\nAdded composition analysis columns (propagated from the SCL joined lexicon for `in_scl=True` keywords):\n\n- **`composition_shift`** \u2014 `valence \u2212 computed_valence`: how much phrase meaning deviates from naive token averaging\n- **`abs_composition_shift`** \u2014 magnitude of shift, sign-agnostic\n- **`shift_zscore`** \u2014 statistical significance: `|z| \u2265 2` = significant outlier from the shift population\n- **`shift_percentile`** \u2014 percentile rank of `|shift|` (0\u2013100); top 5% = strong shift\n- **`shift_strong`** / **`shift_very_strong`** \u2014 absolute threshold flags (`|shift| \u2265 0.30` / `\u2265 0.50`)\n- **`composition_type`** \u2014 linguistic mechanism: `negation` / `degree_modifier` / `modal` / `opposing_polarity` / `idiomatic` / `direct`\n\nThese columns are null for `computed` and unmatched keywords (no empirical phrase score to compare against).\n\n**Top TMDB keywords by composition shift:**\n- `no love` \u2192 \u22121.372 (negation)\n- `sex toy` \u2192 \u22121.267 (idiomatic)\n- `car accident` \u2192 \u22120.995 (idiomatic)\n\n## What's new in v3\n\nAdded SCL coverage and NMA modifier flags:\n\n- **`in_scl`** \u2014 True if the keyword phrase has an exact match in the SCL joined lexicon (OPP, NMA, or VAD)\n- **`scl_token_coverage`** \u2014 fraction of keyword tokens found in SCL unigrams (0.0\u20131.0)\n- **`valence_scale`** \u2014 `bipolar` when valence is not null; confirms all sources use Best-Worst Scaling [-1, +1]\n- **`valence_source`** \u2014 now uses `computed` (instead of `token_mean`) for token-mean fallback\n- **`negators_contained`** \u2014 semicolon-separated negator tokens found in keyword (e.g. `not`, `never`, `no`)\n- **`modals_contained`** \u2014 semicolon-separated modal tokens (e.g. `can`, `should`, `might`)\n- **`adverbs_contained`** \u2014 semicolon-separated intensifier/diminisher adverbs (e.g. `very`, `barely`)\n- **`has_nma`** \u2014 True if any negator, modal, or adverb is present\n\n## What's new in v2\n\nAdded phrase-level valence columns from the Sentiment Composition Lexicons (SCL):\n\n- **SCL-OPP** \u2014 opposing-polarity phrases (e.g. `happy accident`, `bad luck`)\n- **SCL-NMA** \u2014 negator/modal/adverb phrases (e.g. `not bad`, `barely good`)\n\nThese are joined using a valence hierarchy that selects the most specific score available:\n\n```\nvalence_source precedence: opp > nma > vad > computed\n```\n\nComposition shift is only defined for `in_scl=True` keywords (direct SCL phrase match).\n\n```\n```\n\nThis fixes the known limitation of token-level averaging for phrases with mixed polarity.\n\n## Columns (46 total)\n\n| Column | Description |\n|---|---|\n| `keyword` | Raw TMDB keyword phrase |\n| `n_movies` | Number of TMDB movies using this keyword |\n| `emolex_found` | Found in NRC Emotion Lexicon |\n| `intensity_found` | Found in NRC Emotion Intensity Lexicon |\n| `vad_found` | Found in NRC VAD v2.1 |\n| `emolex_anger` \u2026 `emolex_negative` | Binary union across tokens (8 emotions + pos/neg) |\n| `intensity_anger` \u2026 `intensity_disgust` | Mean intensity across matched tokens (0\u20131) |\n| `vad_valence` | Mean keyword valence, bipolar \u22121 to +1 (NRC VAD v2.1, token-mean) |\n| `vad_arousal` | Mean keyword arousal, bipolar \u22121 to +1 |\n| `vad_dominance` | Mean keyword dominance, bipolar \u22121 to +1 |\n| `in_scl` | True if keyword is an exact phrase in the SCL joined lexicon |\n| `scl_token_coverage` | Fraction of keyword tokens (0.0\u20131.0) found as SCL unigrams |\n| `valence` | **Best available valence** \u2014 bipolar [-1, +1] \u2014 following OPP > NMA > VAD > computed hierarchy |\n| `valence_scale` | `bipolar` when valence is not null. All sources use Best-Worst Scaling [-1, +1]. |\n| `valence_source` | Which source supplied the valence: `opp` / `nma` / `vad` (direct SCL) or `computed` (token mean) |\n| `valence_count` | Number of SCL lexicons with a score (0\u20133). Higher = more confident. |\n| `valence_variance` | Variance across lexicon scores (null if < 2 sources \u2014 use as confidence signal) |\n| `matched_tokens` | Tokens with a valence score (relevant for `computed` source) |\n| `total_tokens` | Total tokens in keyword |\n| `negators_contained` | Semicolon-separated negator tokens in keyword (e.g. `not;never`) |\n| `modals_contained` | Semicolon-separated modal tokens in keyword (e.g. `can;should`) |\n| `adverbs_contained` | Semicolon-separated intensifier/diminisher adverbs (e.g. `very;barely`) |\n| `has_nma` | True if any negator, modal, or adverb is present in the keyword |\n\n## Lexicon rules\n\n- **EmoLex (binary):** union across tokens \u2014 if any token has `fear=1`, the keyword gets `emolex_fear=1`\n- **Intensity:** mean across matched tokens (token-level lemmatization via NLTK WordNet)\n- **VAD v2.1:** full-phrase MWE lookup first, then token mean\n- **SCL-OPP / SCL-NMA:** exact phrase lookup; OPP takes precedence over NMA when both match\n- **`computed` fallback:** mean of hierarchy-selected unigram `valence` scores (not raw VAD) \u2014 OPP/NMA scores propagate through token fallback\n\n## Coverage\n\n| Lexicon | Keywords matched | % |\n|---|---|---|\n| NRC Emotion Lexicon (EmoLex) | 37,678 | 55.5% |\n| NRC Emotion Intensity | 21,405 | 31.5% |\n| NRC VAD v2.1 | 44,606 | 65.7% |\n| `valence` (any source) | 38,511 | 56.7% |\n| SCL exact match (`in_scl`) | 11,649 | 17.2% |\n| Keywords with NMA context (`has_nma`) | 190 | 0.3% |\n\n## Data provenance\n\nKeywords extracted from: [asaniczka/tmdb-movies-dataset-2023-930k-movies](https://www.kaggle.com/datasets/asaniczka/tmdb-movies-dataset-2023-930k-movies) (sourced from TMDb API). Adult-labeled movies excluded.\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\nSCL Lexicons: [saifmohammad.com/WebPages/SCL.html](https://www.saifmohammad.com/WebPages/SCL.html)\n\n## Related datasets\n\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) \u2014 movie-level aggregation of these keyword scores\n- [SCL Joined Lexicon](https://www.kaggle.com/datasets/bdelanghe/scl-joined-lexicon) \u2014 the underlying NRC VAD + OPP + NMA join used to produce these scores\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
   "keywords": [
     "nlp",
     "natural-language-processing",
@@ -23,45 +23,190 @@
       "description": "67,916 unique TMDB keyword phrases with NRC EmoLex, Intensity, VAD v2.1, and SCL phrase-level valence scores plus NMA modifier flags. One row per keyword.",
       "schema": {
         "fields": [
-          {"name": "keyword", "description": "Raw TMDB keyword phrase (e.g. 'child abuse', 'space marine')"},
-          {"name": "n_movies", "description": "Number of TMDB movies tagged with this keyword"},
-          {"name": "emolex_found", "description": "True if any token matched NRC Emotion Lexicon"},
-          {"name": "intensity_found", "description": "True if any token matched NRC Emotion Intensity Lexicon"},
-          {"name": "vad_found", "description": "True if phrase or any token matched NRC VAD v2.1"},
-          {"name": "emolex_anger", "description": "NRC EmoLex: 1 if any token associates with anger (binary union)"},
-          {"name": "emolex_anticipation", "description": "NRC EmoLex: 1 if any token associates with anticipation"},
-          {"name": "emolex_disgust", "description": "NRC EmoLex: 1 if any token associates with disgust"},
-          {"name": "emolex_fear", "description": "NRC EmoLex: 1 if any token associates with fear"},
-          {"name": "emolex_joy", "description": "NRC EmoLex: 1 if any token associates with joy"},
-          {"name": "emolex_sadness", "description": "NRC EmoLex: 1 if any token associates with sadness"},
-          {"name": "emolex_surprise", "description": "NRC EmoLex: 1 if any token associates with surprise"},
-          {"name": "emolex_trust", "description": "NRC EmoLex: 1 if any token associates with trust"},
-          {"name": "emolex_positive", "description": "NRC EmoLex: 1 if any token is positive-sentiment"},
-          {"name": "emolex_negative", "description": "NRC EmoLex: 1 if any token is negative-sentiment"},
-          {"name": "intensity_anger", "description": "NRC Intensity: mean anger intensity across matched tokens (0–1)"},
-          {"name": "intensity_anticipation", "description": "NRC Intensity: mean anticipation intensity (0–1)"},
-          {"name": "intensity_disgust", "description": "NRC Intensity: mean disgust intensity (0–1)"},
-          {"name": "intensity_fear", "description": "NRC Intensity: mean fear intensity (0–1)"},
-          {"name": "intensity_joy", "description": "NRC Intensity: mean joy intensity (0–1)"},
-          {"name": "intensity_sadness", "description": "NRC Intensity: mean sadness intensity (0–1)"},
-          {"name": "intensity_surprise", "description": "NRC Intensity: mean surprise intensity (0–1)"},
-          {"name": "intensity_trust", "description": "NRC Intensity: mean trust intensity (0–1)"},
-          {"name": "vad_valence", "description": "NRC VAD v2.1: mean keyword valence, bipolar −1 (negative) to +1 (positive). MWE-first lookup, then token mean."},
-          {"name": "vad_arousal", "description": "NRC VAD v2.1: mean keyword arousal, bipolar −1 (calm) to +1 (excited)"},
-          {"name": "vad_dominance", "description": "NRC VAD v2.1: mean keyword dominance, bipolar −1 (submissive) to +1 (dominant)"},
-          {"name": "in_scl", "description": "True if keyword phrase has an exact match in the SCL joined lexicon (any of VAD, OPP, or NMA)"},
-          {"name": "scl_token_coverage", "description": "Fraction of keyword tokens (0.0–1.0) found as unigrams in the SCL joined lexicon"},
-          {"name": "valence", "description": "Best available bipolar valence [−1, +1] following OPP > NMA > VAD > computed hierarchy. Scale: Best-Worst Scaling."},
-          {"name": "valence_scale", "description": "Always `bipolar` when valence is not null. Confirms scale is Best-Worst Scaling [-1, +1] across all sources (VAD, OPP, NMA, computed)."},
-          {"name": "valence_source", "description": "Source of valence: opp (SCL-OPP), nma (SCL-NMA), vad (NRC VAD exact match), computed (token-mean fallback using hierarchy-selected unigram scores)"},
-          {"name": "valence_count", "description": "Number of SCL lexicons (0–3) with a valence score for this term. Higher = more confident."},
-          {"name": "valence_variance", "description": "Variance across lexicon valence scores. Non-null only when valence_count >= 2. High variance = lexicons disagree."},
-          {"name": "matched_tokens", "description": "Number of tokens with a valence score (relevant for computed source)"},
-          {"name": "total_tokens", "description": "Total word count of keyword phrase"},
-          {"name": "negators_contained", "description": "Semicolon-separated negator tokens found in keyword using word-boundary match (e.g. 'not', 'never', 'no', 'cannot'). Negators invert or reduce polarity."},
-          {"name": "modals_contained", "description": "Semicolon-separated modal tokens found in keyword (e.g. 'can', 'could', 'should', 'might', 'must', 'would'). Modals express conditionality."},
-          {"name": "adverbs_contained", "description": "Semicolon-separated intensifier/diminisher adverbs found in keyword (e.g. 'very', 'quite', 'barely', 'extremely'). Adverbs scale the head word's polarity."},
-          {"name": "has_nma", "description": "True if any negator, modal, or adverb is present in the keyword. Signals potential composition effects where phrase valence differs from token averages."}
+          {
+            "name": "keyword",
+            "description": "Raw TMDB keyword phrase (e.g. 'child abuse', 'space marine')"
+          },
+          {
+            "name": "n_movies",
+            "description": "Number of TMDB movies tagged with this keyword"
+          },
+          {
+            "name": "emolex_found",
+            "description": "True if any token matched NRC Emotion Lexicon"
+          },
+          {
+            "name": "intensity_found",
+            "description": "True if any token matched NRC Emotion Intensity Lexicon"
+          },
+          {
+            "name": "vad_found",
+            "description": "True if phrase or any token matched NRC VAD v2.1"
+          },
+          {
+            "name": "emolex_anger",
+            "description": "NRC EmoLex: 1 if any token associates with anger (binary union)"
+          },
+          {
+            "name": "emolex_anticipation",
+            "description": "NRC EmoLex: 1 if any token associates with anticipation"
+          },
+          {
+            "name": "emolex_disgust",
+            "description": "NRC EmoLex: 1 if any token associates with disgust"
+          },
+          {
+            "name": "emolex_fear",
+            "description": "NRC EmoLex: 1 if any token associates with fear"
+          },
+          {
+            "name": "emolex_joy",
+            "description": "NRC EmoLex: 1 if any token associates with joy"
+          },
+          {
+            "name": "emolex_sadness",
+            "description": "NRC EmoLex: 1 if any token associates with sadness"
+          },
+          {
+            "name": "emolex_surprise",
+            "description": "NRC EmoLex: 1 if any token associates with surprise"
+          },
+          {
+            "name": "emolex_trust",
+            "description": "NRC EmoLex: 1 if any token associates with trust"
+          },
+          {
+            "name": "emolex_positive",
+            "description": "NRC EmoLex: 1 if any token is positive-sentiment"
+          },
+          {
+            "name": "emolex_negative",
+            "description": "NRC EmoLex: 1 if any token is negative-sentiment"
+          },
+          {
+            "name": "intensity_anger",
+            "description": "NRC Intensity: mean anger intensity across matched tokens (0\u20131)"
+          },
+          {
+            "name": "intensity_anticipation",
+            "description": "NRC Intensity: mean anticipation intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_disgust",
+            "description": "NRC Intensity: mean disgust intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_fear",
+            "description": "NRC Intensity: mean fear intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_joy",
+            "description": "NRC Intensity: mean joy intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_sadness",
+            "description": "NRC Intensity: mean sadness intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_surprise",
+            "description": "NRC Intensity: mean surprise intensity (0\u20131)"
+          },
+          {
+            "name": "intensity_trust",
+            "description": "NRC Intensity: mean trust intensity (0\u20131)"
+          },
+          {
+            "name": "vad_valence",
+            "description": "NRC VAD v2.1: mean keyword valence, bipolar \u22121 (negative) to +1 (positive). MWE-first lookup, then token mean."
+          },
+          {
+            "name": "vad_arousal",
+            "description": "NRC VAD v2.1: mean keyword arousal, bipolar \u22121 (calm) to +1 (excited)"
+          },
+          {
+            "name": "vad_dominance",
+            "description": "NRC VAD v2.1: mean keyword dominance, bipolar \u22121 (submissive) to +1 (dominant)"
+          },
+          {
+            "name": "in_scl",
+            "description": "True if keyword phrase has an exact match in the SCL joined lexicon (any of VAD, OPP, or NMA)"
+          },
+          {
+            "name": "scl_token_coverage",
+            "description": "Fraction of keyword tokens (0.0\u20131.0) found as unigrams in the SCL joined lexicon"
+          },
+          {
+            "name": "valence",
+            "description": "Best available bipolar valence [\u22121, +1] following OPP > NMA > VAD > computed hierarchy. Scale: Best-Worst Scaling."
+          },
+          {
+            "name": "valence_scale",
+            "description": "Always `bipolar` when valence is not null. Confirms scale is Best-Worst Scaling [-1, +1] across all sources (VAD, OPP, NMA, computed)."
+          },
+          {
+            "name": "valence_source",
+            "description": "Source of valence: opp (SCL-OPP), nma (SCL-NMA), vad (NRC VAD exact match), computed (token-mean fallback using hierarchy-selected unigram scores)"
+          },
+          {
+            "name": "valence_count",
+            "description": "Number of SCL lexicons (0\u20133) with a valence score for this term. Higher = more confident."
+          },
+          {
+            "name": "valence_variance",
+            "description": "Variance across lexicon valence scores. Non-null only when valence_count >= 2. High variance = lexicons disagree."
+          },
+          {
+            "name": "matched_tokens",
+            "description": "Number of tokens with a valence score (relevant for computed source)"
+          },
+          {
+            "name": "total_tokens",
+            "description": "Total word count of keyword phrase"
+          },
+          {
+            "name": "negators_contained",
+            "description": "Semicolon-separated negator tokens found in keyword using word-boundary match (e.g. 'not', 'never', 'no', 'cannot'). Negators invert or reduce polarity."
+          },
+          {
+            "name": "modals_contained",
+            "description": "Semicolon-separated modal tokens found in keyword (e.g. 'can', 'could', 'should', 'might', 'must', 'would'). Modals express conditionality."
+          },
+          {
+            "name": "adverbs_contained",
+            "description": "Semicolon-separated intensifier/diminisher adverbs found in keyword (e.g. 'very', 'quite', 'barely', 'extremely'). Adverbs scale the head word's polarity."
+          },
+          {
+            "name": "has_nma",
+            "description": "True if any negator, modal, or adverb is present in the keyword. Signals potential composition effects where phrase valence differs from token averages."
+          },
+          {
+            "name": "composition_shift",
+            "description": "valence \u2212 computed_valence. Only populated for in_scl=True keywords. Measures how much phrase valence deviates from naive token averaging."
+          },
+          {
+            "name": "abs_composition_shift",
+            "description": "|composition_shift|. Magnitude of semantic nonlinearity. Null for computed and unmatched keywords."
+          },
+          {
+            "name": "shift_zscore",
+            "description": "Z-score of composition_shift from the SCL joined lexicon population. |z| \u2265 2 = statistically significant shift. Null for computed/unmatched."
+          },
+          {
+            "name": "shift_percentile",
+            "description": "Percentile rank (0\u2013100) of abs_composition_shift in the SCL lexicon. Top 5% = strong; top 1% = extreme. Null for computed/unmatched."
+          },
+          {
+            "name": "shift_strong",
+            "description": "True if abs_composition_shift \u2265 0.30 (meaningful composition effect). Null for computed/unmatched."
+          },
+          {
+            "name": "shift_very_strong",
+            "description": "True if abs_composition_shift \u2265 0.50 (very strong composition effect). Null for computed/unmatched."
+          },
+          {
+            "name": "composition_type",
+            "description": "Linguistic mechanism driving shift. For in_scl=True: negation / degree_modifier / modal / opposing_polarity / idiomatic / nma_unclassified / direct. Null for computed/unmatched."
+          }
         ]
       }
     }

@@ -1,5 +1,5 @@
 {
-  "title": "SCL Joined Lexicon — NRC VAD + OPP + NMA",
+  "title": "SCL Joined Lexicon \u2014 NRC VAD + OPP + NMA",
   "id": "bdelanghe/scl-joined-lexicon",
   "licenses": [
     {
@@ -7,7 +7,7 @@
     }
   ],
   "subtitle": "57K terms: NRC VAD v2.1 + SCL-OPP + SCL-NMA full outer join",
-  "description": "Full outer join of three NRC affective lexicons on `term`, with a unified valence hierarchy (OPP > NMA > VAD) and phrase composition analysis.\n\n## Lexicons joined\n\n| Lexicon | Terms | Scale | Notes |\n|---|---|---|---|\n| **NRC VAD v2.1** | 54,801 | bipolar −1 to +1 | Unigrams, bigrams, 2 trigrams. MWE-first lookup. |\n| **SCL-OPP** | 1,178 | bipolar −1 to +1 | Opposing-polarity phrases (e.g. `happy accident`, `bad luck`) |\n| **SCL-NMA** | 3,207 | bipolar −1 to +1 | Negator/modal/adverb phrases (e.g. `not bad`, `barely good`) |\n\nAll three lexicons use Best-Worst Scaling and are directly comparable on the same bipolar [-1, +1] scale.\n\n## Valence hierarchy\n\n```\nvalence_source precedence: opp > nma > vad\n```\n\nWhen a term appears in multiple lexicons, OPP takes precedence (most semantically specific), then NMA, then VAD. The `valence` column always reflects the highest-priority source.\n\n## Composition shift\n\n`composition_shift = valence − computed_valence`\n\nWhere `computed_valence` is the mean of hierarchy-selected unigram `valence` scores for each token in the phrase. Positive shift = phrase is more positive than its parts predict; negative shift = phrase is more negative (e.g. negation reversals).\n\n**Notable examples:**\n- `not love` → shift −1.747 (largest negative shift)\n- `no harm` → shift +1.143 (largest positive shift)\n\nMean shift across all phrases: −0.13 (phrases tend to be more negative than token-averaging predicts).\n\n## Columns (23 total)\n\n| Column | Description |\n|---|---|\n| `term` | Lexicon term (lowercased phrase) |\n| `ngrams` | Word count (1 = unigram, 2 = bigram, 3 = trigram) |\n| `in_vad` | True if term appears in NRC VAD v2.1 |\n| `in_opp` | True if term appears in SCL-OPP |\n| `in_nma` | True if term appears in SCL-NMA |\n| `vad_valence` | NRC VAD v2.1 valence, bipolar −1 to +1 |\n| `vad_arousal` | NRC VAD v2.1 arousal, bipolar −1 to +1 |\n| `vad_dominance` | NRC VAD v2.1 dominance, bipolar −1 to +1 |\n| `opp_valence` | SCL-OPP valence for opposing-polarity phrases |\n| `opp_pos` | SCL-OPP POS pattern (e.g. `A+N`, `N+N`) |\n| `opp_freq` | SCL-OPP tweet frequency (corpus count) |\n| `opp_is_hashtag` | True if original SCL-OPP term was a hashtag (# removed) |\n| `nma_valence` | SCL-NMA valence for negator/modal/adverb phrases |\n| `valence_count` | Number of lexicons with a valence score (0–3) |\n| `valence_variance` | Variance across lexicon scores (null if < 2 sources — use as confidence signal) |\n| `valence_source` | Winning source: `opp` / `nma` / `vad` |\n| `valence` | **Best available valence** from hierarchy (bipolar −1 to +1) |\n| `negators_contained` | List of negator tokens found within this term (word-boundary match) |\n| `modals_contained` | List of modal tokens found within this term |\n| `adverbs_contained` | List of intensifier/diminisher adverbs found within this term |\n| `computed_valence` | Token-mean of hierarchy-selected unigram valence scores |\n| `composition_shift` | `valence − computed_valence` (semantic nonlinearity) |\n| `abs_composition_shift` | `|composition_shift|` (magnitude of shift, sign-agnostic) |\n\n## Coverage\n\n| Lexicon | Terms | % of 57K joined |\n|---|---|---|\n| NRC VAD v2.1 | 54,801 | 96.1% |\n| SCL-OPP | 1,178 | 2.1% |\n| SCL-NMA | 3,207 | 5.6% |\n| Cross-validated (≥2 sources) | 1,983 | 3.5% |\n\n## Data provenance\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\nSCL Lexicons: [saifmohammad.com/WebPages/SCL.html](https://www.saifmohammad.com/WebPages/SCL.html)\n\n## Related datasets\n\n- [TMDB Keyword Lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) — 67,916 TMDB keywords scored using this joined lexicon\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) — movie-level aggregation\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
+  "description": "Full outer join of three NRC affective lexicons on `term`, with a unified valence hierarchy (OPP > NMA > VAD) and phrase composition analysis.\n\n## Lexicons joined\n\n| Lexicon | Terms | Scale | Notes |\n|---|---|---|---|\n| **NRC VAD v2.1** | 54,801 | bipolar \u22121 to +1 | Unigrams, bigrams, 2 trigrams. MWE-first lookup. |\n| **SCL-OPP** | 1,178 | bipolar \u22121 to +1 | Opposing-polarity phrases (e.g. `happy accident`, `bad luck`) |\n| **SCL-NMA** | 3,207 | bipolar \u22121 to +1 | Negator/modal/adverb phrases (e.g. `not bad`, `barely good`) |\n\nAll three lexicons use Best-Worst Scaling and are directly comparable on the same bipolar [-1, +1] scale.\n\n## Valence hierarchy\n\n```\nvalence_source precedence: opp > nma > vad\n```\n\nWhen a term appears in multiple lexicons, OPP takes precedence (most semantically specific), then NMA, then VAD. The `valence` column always reflects the highest-priority source.\n\n## Sentiment compositionality\n\nThe core insight: **the distance between two models of meaning**.\n\n- **Selected valence** (`valence`) \u2014 human-annotated phrase score from the lexicon\n- **Computed valence** (`computed_valence`) \u2014 naive word-averaging (token mean)\n- **Composition shift** = `valence \u2212 computed_valence`\n\nPositive shift \u2192 phrase is more positive than its parts predict\nNegative shift \u2192 phrase is more negative than its parts predict (negation, irony)\n\nThree detection methods are pre-computed:\n\n| Column | Method | Threshold |\n|--------|--------|-----------|\n| `abs_composition_shift` | Absolute \u2014 `|shift|` | \u2265 0.30 strong, \u2265 0.50 very strong |\n| `shift_zscore` | Z-score \u2014 statistical significance | `|z| \u2265 2` flags outliers |\n| `shift_percentile` | Percentile rank of `|shift|` (0\u2013100) | top 5% / 1% = tail |\n\n**`composition_type`** classifies the linguistic mechanism:\n\n| Type | Mechanism | Example |\n|------|-----------|---------|\n| `negation` | Negator token reverses polarity | `not love` (shift \u22121.75) |\n| `degree_modifier` | Intensifier/diminisher adverb | `pretty bad`, `very very bad` |\n| `modal` | Modal verb introduces conditionality | `might succeed` |\n| `opposing_polarity` | OPP phrase \u2014 tokens predict wrong polarity | `happy accident`, `guilty pleasure` |\n| `idiomatic` | VAD multi-word, `|shift| \u2265 0.30`, no explicit modifier | `zero tolerance`, `sex toy` |\n| `nma_unclassified` | NMA phrase without detected modifier | unigram NMA entries |\n| `direct` | Unigram or minimal shift | single words |\n\nMean shift by type: negation 0.59 \u2192 idiomatic 0.46 \u2192 degree_modifier 0.29 \u2192 opposing_polarity 0.19\n\n**Notable examples:**\n- `not love` \u2192 shift \u22121.747 (negation, largest negative)\n- `zero tolerance` \u2192 shift \u22121.438 (idiomatic, VAD)\n- `no harm` \u2192 shift +1.143 (negation, largest positive)\n\nPopulation: 56,900 terms with a shift. Mean \u22120.027, std 0.152.\n\n## Columns (28 total)\n\n| Column | Description |\n|---|---|\n| `term` | Lexicon term (lowercased phrase) |\n| `ngrams` | Word count (1 = unigram, 2 = bigram, 3 = trigram) |\n| `in_vad` | True if term appears in NRC VAD v2.1 |\n| `in_opp` | True if term appears in SCL-OPP |\n| `in_nma` | True if term appears in SCL-NMA |\n| `vad_valence` | NRC VAD v2.1 valence, bipolar \u22121 to +1 |\n| `vad_arousal` | NRC VAD v2.1 arousal, bipolar \u22121 to +1 |\n| `vad_dominance` | NRC VAD v2.1 dominance, bipolar \u22121 to +1 |\n| `opp_valence` | SCL-OPP valence for opposing-polarity phrases |\n| `opp_pos` | SCL-OPP POS pattern (e.g. `A+N`, `N+N`) |\n| `opp_freq` | SCL-OPP tweet frequency (corpus count) |\n| `opp_is_hashtag` | True if original SCL-OPP term was a hashtag (# removed) |\n| `nma_valence` | SCL-NMA valence for negator/modal/adverb phrases |\n| `valence_count` | Number of lexicons with a valence score (0\u20133) |\n| `valence_variance` | Variance across lexicon scores (null if < 2 sources \u2014 use as confidence signal) |\n| `valence_source` | Winning source: `opp` / `nma` / `vad` |\n| `valence` | **Best available valence** from hierarchy (bipolar \u22121 to +1) |\n| `negators_contained` | Negator tokens found within this term (word-boundary match) |\n| `modals_contained` | Modal tokens found within this term |\n| `adverbs_contained` | Intensifier/diminisher adverbs found within this term |\n| `computed_valence` | Token-mean of hierarchy-selected unigram valence scores |\n| `composition_shift` | `valence \u2212 computed_valence` \u2014 semantic nonlinearity |\n| `abs_composition_shift` | `|composition_shift|` \u2014 magnitude, sign-agnostic |\n| `shift_zscore` | Z-score of `composition_shift` over all terms with a shift |\n| `shift_percentile` | Percentile rank (0\u2013100) of `abs_composition_shift` |\n| `shift_strong` | True if `abs_composition_shift \u2265 0.30` |\n| `shift_very_strong` | True if `abs_composition_shift \u2265 0.50` |\n| `composition_type` | Linguistic mechanism: `negation` / `degree_modifier` / `modal` / `opposing_polarity` / `idiomatic` / `nma_unclassified` / `direct` |\n## Coverage\n\n| Lexicon | Terms | % of 57K joined |\n|---|---|---|\n| NRC VAD v2.1 | 54,801 | 96.1% |\n| SCL-OPP | 1,178 | 2.1% |\n| SCL-NMA | 3,207 | 5.6% |\n| Cross-validated (\u22652 sources) | 1,983 | 3.5% |\n\n## Data provenance\n\nNRC Lexicons: [saifmohammad.com/WebPages/lexicons.html](https://saifmohammad.com/WebPages/lexicons.html)\n\nSCL Lexicons: [saifmohammad.com/WebPages/SCL.html](https://www.saifmohammad.com/WebPages/SCL.html)\n\n## Related datasets\n\n- [TMDB Keyword Lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) \u2014 67,916 TMDB keywords scored using this joined lexicon\n- [TMDB Movie VAD + Emotion Scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-vad-emotion-scores) \u2014 movie-level aggregation\n\n**Source pipeline:** [github.com/bdelanghe/imdb-kaggle](https://github.com/bdelanghe/imdb-kaggle)",
   "keywords": [
     "nlp",
     "natural-language-processing",
@@ -22,29 +22,118 @@
       "description": "57,004 unique terms from full outer join of NRC VAD v2.1 + SCL-OPP + SCL-NMA with valence hierarchy and composition shift analysis.",
       "schema": {
         "fields": [
-          {"name": "term", "description": "Lexicon term (lowercased phrase)"},
-          {"name": "ngrams", "description": "Word count: 1=unigram, 2=bigram, 3=trigram"},
-          {"name": "in_vad", "description": "True if term appears in NRC VAD v2.1"},
-          {"name": "in_opp", "description": "True if term appears in SCL-OPP (Opposing Polarity Phrases)"},
-          {"name": "in_nma", "description": "True if term appears in SCL-NMA (Negator/Modal/Adverb phrases)"},
-          {"name": "vad_valence", "description": "NRC VAD v2.1 valence, bipolar −1 (negative) to +1 (positive)"},
-          {"name": "vad_arousal", "description": "NRC VAD v2.1 arousal, bipolar −1 (calm) to +1 (excited)"},
-          {"name": "vad_dominance", "description": "NRC VAD v2.1 dominance, bipolar −1 (submissive) to +1 (dominant)"},
-          {"name": "opp_valence", "description": "SCL-OPP valence for opposing-polarity phrases (bipolar −1 to +1)"},
-          {"name": "opp_pos", "description": "SCL-OPP POS pattern of the phrase (e.g. A+N for adjective+noun)"},
-          {"name": "opp_freq", "description": "SCL-OPP tweet frequency — how often this phrase appeared in the corpus"},
-          {"name": "opp_is_hashtag", "description": "True if the original SCL-OPP entry was a hashtag (# prefix removed during load)"},
-          {"name": "nma_valence", "description": "SCL-NMA valence for negator/modal/adverb phrases (bipolar −1 to +1)"},
-          {"name": "valence_count", "description": "Number of lexicons (0–3) with a valence score for this term. Higher = more confident."},
-          {"name": "valence_variance", "description": "Variance across lexicon valence scores. Non-null only when valence_count >= 2. High variance = lexicons disagree."},
-          {"name": "valence_source", "description": "Source of the winning valence: opp (SCL-OPP), nma (SCL-NMA), vad (NRC VAD)"},
-          {"name": "valence", "description": "Best available bipolar valence [−1, +1] following OPP > NMA > VAD hierarchy"},
-          {"name": "negators_contained", "description": "Negator tokens found within this term using word-boundary sliding window match (e.g. 'not', 'no', 'never')"},
-          {"name": "modals_contained", "description": "Modal tokens found within this term (e.g. 'can', 'could', 'should', 'might')"},
-          {"name": "adverbs_contained", "description": "Intensifier/diminisher adverbs found within this term (e.g. 'very', 'barely', 'almost')"},
-          {"name": "computed_valence", "description": "Token-mean of hierarchy-selected unigram valence scores for each word in the phrase"},
-          {"name": "composition_shift", "description": "valence − computed_valence: positive = phrase is more positive than parts predict; negative = more negative (e.g. negation reversal)"},
-          {"name": "abs_composition_shift", "description": "|composition_shift|: magnitude of semantic nonlinearity regardless of direction"}
+          {
+            "name": "term",
+            "description": "Lexicon term (lowercased phrase)"
+          },
+          {
+            "name": "ngrams",
+            "description": "Word count: 1=unigram, 2=bigram, 3=trigram"
+          },
+          {
+            "name": "in_vad",
+            "description": "True if term appears in NRC VAD v2.1"
+          },
+          {
+            "name": "in_opp",
+            "description": "True if term appears in SCL-OPP (Opposing Polarity Phrases)"
+          },
+          {
+            "name": "in_nma",
+            "description": "True if term appears in SCL-NMA (Negator/Modal/Adverb phrases)"
+          },
+          {
+            "name": "vad_valence",
+            "description": "NRC VAD v2.1 valence, bipolar \u22121 (negative) to +1 (positive)"
+          },
+          {
+            "name": "vad_arousal",
+            "description": "NRC VAD v2.1 arousal, bipolar \u22121 (calm) to +1 (excited)"
+          },
+          {
+            "name": "vad_dominance",
+            "description": "NRC VAD v2.1 dominance, bipolar \u22121 (submissive) to +1 (dominant)"
+          },
+          {
+            "name": "opp_valence",
+            "description": "SCL-OPP valence for opposing-polarity phrases (bipolar \u22121 to +1)"
+          },
+          {
+            "name": "opp_pos",
+            "description": "SCL-OPP POS pattern of the phrase (e.g. A+N for adjective+noun)"
+          },
+          {
+            "name": "opp_freq",
+            "description": "SCL-OPP tweet frequency \u2014 how often this phrase appeared in the corpus"
+          },
+          {
+            "name": "opp_is_hashtag",
+            "description": "True if the original SCL-OPP entry was a hashtag (# prefix removed during load)"
+          },
+          {
+            "name": "nma_valence",
+            "description": "SCL-NMA valence for negator/modal/adverb phrases (bipolar \u22121 to +1)"
+          },
+          {
+            "name": "valence_count",
+            "description": "Number of lexicons (0\u20133) with a valence score. Higher = more confident."
+          },
+          {
+            "name": "valence_variance",
+            "description": "Variance across lexicon valence scores. Non-null only when valence_count >= 2. High variance = lexicons disagree."
+          },
+          {
+            "name": "valence_source",
+            "description": "Source of the winning valence: opp (SCL-OPP), nma (SCL-NMA), vad (NRC VAD)"
+          },
+          {
+            "name": "valence",
+            "description": "Best available bipolar valence [\u22121, +1] following OPP > NMA > VAD hierarchy"
+          },
+          {
+            "name": "negators_contained",
+            "description": "Negator tokens found within this term using word-boundary match (e.g. 'not', 'no', 'never', 'cannot')"
+          },
+          {
+            "name": "modals_contained",
+            "description": "Modal tokens found within this term (e.g. 'can', 'could', 'should', 'might')"
+          },
+          {
+            "name": "adverbs_contained",
+            "description": "Intensifier/diminisher adverbs found within this term (e.g. 'very', 'barely', 'extremely')"
+          },
+          {
+            "name": "computed_valence",
+            "description": "Token-mean of hierarchy-selected unigram valence scores. For unigrams: equals valence (shift=0). For multi-word: naive additive model."
+          },
+          {
+            "name": "composition_shift",
+            "description": "valence \u2212 computed_valence. Positive = phrase more positive than parts predict. Negative = more negative (negation, irony). Only meaningful for multi-word terms."
+          },
+          {
+            "name": "abs_composition_shift",
+            "description": "|composition_shift|. Magnitude of semantic nonlinearity regardless of direction."
+          },
+          {
+            "name": "shift_zscore",
+            "description": "Z-score of composition_shift: (shift \u2212 mean_shift) / std_shift over all terms with a shift. |z| \u2265 2 = statistically significant outlier."
+          },
+          {
+            "name": "shift_percentile",
+            "description": "Percentile rank (0\u2013100) of abs_composition_shift. Top 5% = strong shift; top 1% = extreme shift."
+          },
+          {
+            "name": "shift_strong",
+            "description": "True if abs_composition_shift \u2265 0.30. Heuristic threshold for a meaningful composition effect."
+          },
+          {
+            "name": "shift_very_strong",
+            "description": "True if abs_composition_shift \u2265 0.50. Heuristic threshold for a very strong composition effect."
+          },
+          {
+            "name": "composition_type",
+            "description": "Linguistic mechanism: negation (negator token), degree_modifier (adverb), modal (modal verb), opposing_polarity (OPP phrase), idiomatic (VAD multi-word |shift|\u22650.30), nma_unclassified (NMA without detected modifier), direct (minimal shift)"
+          }
         ]
       }
     }
