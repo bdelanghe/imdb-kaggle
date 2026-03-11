@@ -17,3 +17,6 @@ output/*.zip
 
 # dataset-metadata.json is tracked (defines schema + column descriptions)
 output/keyword-lexicon/tmdb_keyword_lexicon.csv
+
+# IDE config
+.cursor/
