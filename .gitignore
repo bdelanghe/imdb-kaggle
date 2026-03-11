@@ -4,19 +4,8 @@ env
 .devbox
 "/
 
-# Ignore generated data by default; NRC/SCL source files and canonical keywords are tracked
-data/*
-data/lexicons/
-!data/NRC-emotion-lexicon-wordlevel-alphabetized-v0.92.txt
-!data/NRC-Emotion-Intensity-Lexicon/
-!data/NRC-Emotion-Intensity-Lexicon/**
-!data/NRC-VAD-Lexicon-v2.1/
-!data/NRC-VAD-Lexicon-v2.1/**
-!data/SCL-OPP/
-!data/SCL-OPP/**
-!data/SCL-NMA/
-!data/SCL-NMA/**
-!data/tmdb_keywords_canonical.csv
+# Ignore all project data
+/data/
 
 # Dolt database files (added by bd init)
 .dolt/
