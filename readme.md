@@ -1,17 +1,28 @@
 # TMDB Keyword SCL Pipeline
 
-A pipeline that scores TMDB movie keywords using the [SCL (Sentiment Composition Lexicon)](https://www.saifmohammad.com/WebPages/SCL.html) hierarchy and aggregates the results to per-movie valence profiles. The pipeline runs monthly via GitHub Actions and publishes four Kaggle datasets.
+A pipeline that scores TMDB movie keywords using the [SCL (Sentiment Composition Lexicon)](https://www.saifmohammad.com/WebPages/SCL.html) hierarchy and aggregates the results to per-movie valence profiles. The pipeline runs monthly via GitHub Actions and publishes datasets to Kaggle.
 
 ---
 
-## Kaggle Datasets
+## Final Artifacts
+
+| Dataset | Kaggle | Description |
+|---------|--------|-------------|
+| **Movie × Keyword pairs (enriched)** | [tmdb-movie-keyword-pairs-scl-enriched](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-keyword-pairs-scl-enriched) | 928K (movie, keyword) pairs with SCL valence, polarity, keyword type — 84.7% have a valence score |
+| **Movies enriched with sentiment** | [tmdb-movie-enriched-scl-aggregate](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-enriched-scl-aggregate) | 212K movies (with keywords only) — full metadata + keyword sentiment aggregate (weighted mean, polarity fractions, dominant polarity) |
+
+---
+
+## All Kaggle Datasets
 
 | Dataset | Description |
 |---------|-------------|
 | [tmdb-movies-clean](https://www.kaggle.com/datasets/bdelanghe/tmdb-movies-clean) | ~280K TMDB movies, deduplicated and keyword-filtered against the canonical keyword list |
-| [tmdb-keyword-lexicon](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-lexicon) | 84K keywords with SCL valence, keyword type enum, and `exclude_from_scl` flag |
-| [scl-joined-lexicon](https://www.kaggle.com/datasets/bdelanghe/scl-joined-lexicon) | NRC VAD v2.1 + SCL-OPP + SCL-NMA joined on term, with full composition analysis |
-| [tmdb-movie-keyword-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-keyword-scores) | One row per movie -- SCL-filtered keyword valence aggregates |
+| [tmdb-keyword-enriched](https://www.kaggle.com/datasets/bdelanghe/tmdb-keyword-enriched) | 84K keywords with SCL valence, keyword type, `is_narrative`, `movie_count`, unigram-avg fallback coverage |
+| [tmdb-scl-joined](https://www.kaggle.com/datasets/bdelanghe/tmdb-scl-joined) | NRC VAD v2.1 + SCL-OPP + SCL-NMA joined on term, with composition shift analysis and generated valence |
+| [tmdb-movie-keyword-pairs-scl-enriched](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-keyword-pairs-scl-enriched) | 928K (movie, keyword) pairs — **primary edge list** with valence and polarity per pair |
+| [tmdb-movie-sentiment-scores](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-sentiment-scores) | Per-movie keyword sentiment aggregate (weighted mean, polarity fractions) |
+| [tmdb-movie-enriched-scl-aggregate](https://www.kaggle.com/datasets/bdelanghe/tmdb-movie-enriched-scl-aggregate) | **Primary final table** — 212K movies with full metadata + sentiment aggregate |
 
 ---
 
