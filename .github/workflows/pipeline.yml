@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '0 4 1 * *'   # 1st of every month at 04:00 UTC
 
+env:
+  KAGGLE_TOKEN: ${{ secrets.KAGGLE_TOKEN }}
+
 jobs:
   pipeline:
     runs-on: ubuntu-latest
@@ -25,13 +28,13 @@ jobs:
         run: python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
 
       # ── Refresh TMDB source data ────────────────────────────────────────
-      - name: Download TMDB daily exports
-        env:
-          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
-        run: python scripts/download_tmdb_exports.py
+      - name: 00 — Download TMDb keyword export (daily gz)
+        run: |
+          jupyter nbconvert --to notebook --execute --inplace 00_tmdb_keyword_download.ipynb \
+            --ExecutePreprocessor.timeout=120
 
-      - name: Build canonical keyword list
-        run: python scripts/build_tmdb_canonical.py
+      - name: Download TMDB daily exports (movies, companies, collections)
+        run: python scripts/download_tmdb_exports.py
 
       - name: Fetch new / updated movies from TMDB API
         env:
@@ -65,8 +68,6 @@ jobs:
 
       # ── Core pipeline: 04 → 06 → 07 → 08 → 09 ─────────────────────────
       - name: 04 — Build keyword lexicon (NRC emotion + VAD scores per keyword)
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           jupyter nbconvert --to notebook --execute --inplace 04_keyword_lexicon.ipynb \
             --ExecutePreprocessor.timeout=600
@@ -98,9 +99,14 @@ jobs:
           cp data/tmdb_movie_keywords_exploded.csv output/tmdb-movie-keywords-exploded/
 
       # ── Push all datasets to Kaggle ─────────────────────────────────────
+      - name: Push enriched keyword dataset
+        run: |
+          kaggle datasets version \
+            -p output/tmdb-keyword-enriched \
+            -m "Pipeline run $(date +%Y-%m-%d)" \
+            --dir-mode zip
+
       - name: Push TMDB movies clean
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
             -p output/tmdb-movies-clean \
@@ -108,8 +114,6 @@ jobs:
             --dir-mode zip
 
       - name: Push keyword lexicon
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
             -p output/keyword-lexicon \
@@ -117,8 +121,6 @@ jobs:
             --dir-mode zip
 
       - name: Push SCL joined lexicon
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
             -p output/scl-joined \
@@ -126,8 +128,6 @@ jobs:
             --dir-mode zip
 
       - name: Push movie scores
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
             -p output/tmdb-movie-scores \
@@ -135,8 +135,6 @@ jobs:
             --dir-mode zip
 
       - name: Push movie keywords exploded
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: |
           kaggle datasets version \
             -p output/tmdb-movie-keywords-exploded \
@@ -148,7 +146,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add '04_keyword_lexicon.ipynb' '06_scl_join.ipynb' \
+          git add '00_tmdb_keyword_download.ipynb' \
+                  '04_keyword_lexicon.ipynb' '06_scl_join.ipynb' \
                   '07_keyword_valence.ipynb' '08_movie_quality_filter.ipynb' \
                   '09_final_pipeline.ipynb'
           git diff --staged --quiet || \

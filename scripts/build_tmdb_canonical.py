@@ -1,94 +1,130 @@
 #!/usr/bin/env python3
 """
-Phase 1: Build TMDB canonical keyword list from daily export.
+Build TMDB canonical keyword list from daily export.
 
-Downloads http://files.tmdb.org/p/exports/keyword_ids_MM_DD_YYYY.json.gz
-(zero API cost, ~84K keywords) and joins to output/tmdb_keyword_lexicon.csv.
-
-Coverage: ~90.5% of Kaggle keywords matched by exact lowercase name.
+Downloads https://files.tmdb.org/p/exports/keyword_ids_MM_DD_YYYY.json.gz
+(no API key required, ~84K keywords) and optionally joins to
+output/tmdb_keyword_lexicon.csv.
 
 Outputs:
   data/tmdb_keywords_canonical.csv  — full TMDB export (tmdb_keyword_id, name)
-  output/tmdb_keyword_lexicon.csv   — updated with tmdb_keyword_id column
+  output/tmdb_keyword_lexicon.csv   — updated with tmdb_keyword_id column (if present)
 
 Usage:
-    .venv/bin/python scripts/build_tmdb_canonical.py
+    python scripts/build_tmdb_canonical.py
 """
-import datetime
+from __future__ import annotations
+
 import gzip
+import io
 import json
+import urllib.error
 import urllib.request
+from dataclasses import dataclass, field
+from datetime import date, timedelta
 from pathlib import Path
+from typing import Iterator
 
 import pandas as pd
 
-OUTPUT_DIR = Path("data")
-CANONICAL_FILE = OUTPUT_DIR / "tmdb_keywords_canonical.csv"
+CANONICAL_FILE = Path("data/tmdb_keywords_canonical.csv")
 LEXICON_FILE = Path("output/tmdb_keyword_lexicon.csv")
+UNMATCHED_FILE = Path("data/tmdb_keywords_unmatched.txt")
+
+BASE_URL = "https://files.tmdb.org/p/exports"
+LOOKBACK_DAYS = 3
+TIMEOUT = 60
 
 
-def download_export() -> pd.DataFrame:
-    today = datetime.date.today()
-    url = (
-        f"http://files.tmdb.org/p/exports/"
-        f"keyword_ids_{today.month:02d}_{today.day:02d}_{today.year}.json.gz"
+def candidate_urls() -> Iterator[tuple[date, str]]:
+    for delta in range(LOOKBACK_DAYS):
+        d = date.today() - timedelta(days=delta)
+        url = f"{BASE_URL}/keyword_ids_{d.month:02d}_{d.day:02d}_{d.year}.json.gz"
+        yield d, url
+
+
+def fetch_export() -> tuple[date, bytes]:
+    errors: list[str] = []
+    for d, url in candidate_urls():
+        print(f"Trying {url} ...", end=" ", flush=True)
+        try:
+            with urllib.request.urlopen(url, timeout=TIMEOUT) as resp:
+                data = resp.read()
+            print(f"{len(data):,} bytes")
+            return d, data
+        except urllib.error.HTTPError as exc:
+            msg = f"HTTP {exc.code}"
+            print(msg)
+            errors.append(f"{d}: {msg}")
+        except urllib.error.URLError as exc:
+            msg = str(exc.reason)
+            print(msg)
+            errors.append(f"{d}: {msg}")
+    raise RuntimeError(
+        f"Failed to fetch keyword export for last {LOOKBACK_DAYS} days:\n"
+        + "\n".join(errors)
     )
-    print(f"Downloading {url} ...")
-    with urllib.request.urlopen(url, timeout=30) as r:
-        raw = gzip.decompress(r.read()).decode()
-
-    records = [json.loads(line) for line in raw.strip().split("\n")]
-    df = pd.DataFrame(records).rename(columns={"id": "tmdb_keyword_id"})
-    df = df[["tmdb_keyword_id", "name"]].sort_values("tmdb_keyword_id").reset_index(drop=True)
-    print(f"Downloaded {len(df):,} keywords from TMDB export")
-    return df
 
 
-def save_canonical(df: pd.DataFrame):
-    OUTPUT_DIR.mkdir(exist_ok=True)
+def parse_export(raw_gz: bytes) -> pd.DataFrame:
+    with gzip.open(io.BytesIO(raw_gz), "rt", encoding="utf-8") as fh:
+        records = [
+            {"tmdb_keyword_id": obj["id"], "name": obj["name"]}
+            for line in fh
+            if (line := line.strip())
+            for obj in [json.loads(line)]
+        ]
+    return (
+        pd.DataFrame(records)
+        .drop_duplicates("tmdb_keyword_id")
+        .sort_values("tmdb_keyword_id")
+        .reset_index(drop=True)
+        .astype({"tmdb_keyword_id": "int64", "name": "string"})
+    )
+
+
+def save_canonical(df: pd.DataFrame) -> None:
+    CANONICAL_FILE.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(CANONICAL_FILE, index=False)
     print(f"Saved {len(df):,} keywords → {CANONICAL_FILE}")
 
 
-def join_to_lexicon(canonical: pd.DataFrame):
-    lexicon = pd.read_csv(LEXICON_FILE)
+def join_to_lexicon(canonical: pd.DataFrame) -> None:
+    if not LEXICON_FILE.exists():
+        print(f"Skipping join: {LEXICON_FILE} not found")
+        return
 
-    # Drop any pre-existing tmdb_keyword_id column
+    lexicon = pd.read_csv(LEXICON_FILE)
     if "tmdb_keyword_id" in lexicon.columns:
         lexicon = lexicon.drop(columns=["tmdb_keyword_id"])
 
-    canonical["name_norm"] = canonical["name"].str.lower().str.strip()
+    norm = canonical.assign(name_norm=canonical["name"].str.lower().str.strip())
     lexicon["name_norm"] = lexicon["keyword"].str.lower().str.strip()
 
-    lexicon = lexicon.merge(
-        canonical[["tmdb_keyword_id", "name_norm"]],
-        on="name_norm",
-        how="left",
-    ).drop(columns="name_norm")
+    lexicon = (
+        lexicon
+        .merge(norm[["tmdb_keyword_id", "name_norm"]], on="name_norm", how="left")
+        .drop(columns="name_norm")
+    )
 
-    # Move tmdb_keyword_id to second column
-    cols = ["keyword", "tmdb_keyword_id"] + [
-        c for c in lexicon.columns if c not in ("keyword", "tmdb_keyword_id")
-    ]
-    lexicon = lexicon[cols]
+    other_cols = [c for c in lexicon.columns if c not in ("keyword", "tmdb_keyword_id")]
+    lexicon = lexicon[["keyword", "tmdb_keyword_id", *other_cols]]
 
     total = lexicon["keyword"].notna().sum()
     matched = lexicon["tmdb_keyword_id"].notna().sum()
-    unmatched = total - matched
-    print(f"Matched:   {matched:,} / {total:,} ({matched/total*100:.1f}%)")
-    print(f"Unmatched: {unmatched:,} — run scripts/crawl_tmdb_keywords.py for Phase 2")
+    print(f"Matched   : {matched:,} / {total:,} ({matched / total * 100:.1f}%)")
+    print(f"Unmatched : {total - matched:,} — see {UNMATCHED_FILE}")
 
     lexicon.to_csv(LEXICON_FILE, index=False)
-    print(f"Updated {LEXICON_FILE}")
+    print(f"Updated   : {LEXICON_FILE}")
 
-    # Save unmatched list for Phase 2
-    unmatched_kws = lexicon.loc[lexicon["tmdb_keyword_id"].isna(), "keyword"].dropna().tolist()
-    unmatched_file = OUTPUT_DIR / "tmdb_keywords_unmatched.txt"
-    unmatched_file.write_text("\n".join(unmatched_kws))
-    print(f"Unmatched list → {unmatched_file} ({len(unmatched_kws):,} keywords)")
+    unmatched = lexicon.loc[lexicon["tmdb_keyword_id"].isna(), "keyword"].dropna().tolist()
+    UNMATCHED_FILE.write_text("\n".join(unmatched))
 
 
 if __name__ == "__main__":
-    canonical = download_export()
+    export_date, raw_gz = fetch_export()
+    canonical = parse_export(raw_gz)
+    print(f"Export date : {export_date}  |  keywords : {len(canonical):,}")
     save_canonical(canonical)
     join_to_lexicon(canonical)
