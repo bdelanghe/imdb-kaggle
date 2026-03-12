@@ -7,3 +7,4 @@ wordfreq
 plotly
 pandas
 nbconvert
+statsmodels
