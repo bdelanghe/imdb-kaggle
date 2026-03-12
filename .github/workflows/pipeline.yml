@@ -98,48 +98,36 @@ jobs:
           cp data/tmdb_movie_scores.csv output/tmdb-movie-scores/
           cp data/tmdb_movie_keywords_exploded.csv output/tmdb-movie-keywords-exploded/
 
-      # ── Push all datasets to Kaggle ─────────────────────────────────────
-      - name: Push enriched keyword dataset
+      # ── Push all datasets to Kaggle via kagglehub ───────────────────────
+      - name: Push all datasets to Kaggle
         run: |
-          kaggle datasets version \
-            -p output/tmdb-keyword-enriched \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
+          python3 - <<'EOF'
+          import kagglehub
+          from datetime import date
 
-      - name: Push TMDB movies clean
-        run: |
-          kaggle datasets version \
-            -p output/tmdb-movies-clean \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
+          kagglehub.login()
+          user = kagglehub.whoami(verbose=False)["username"]
+          notes = f"Pipeline run {date.today()}"
 
-      - name: Push keyword lexicon
-        run: |
-          kaggle datasets version \
-            -p output/keyword-lexicon \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
+          datasets = [
+              ("tmdb-keyword-enriched",        "output/tmdb-keyword-enriched",        {"ignore_patterns": ["*.json"]}),
+              ("tmdb-movies-clean",             "output/tmdb-movies-clean",             {}),
+              ("tmdb-keyword-lexicon",          "output/keyword-lexicon",               {}),
+              ("tmdb-scl-joined",               "output/scl-joined",                    {}),
+              ("tmdb-movie-scores",             "output/tmdb-movie-scores",             {}),
+              ("tmdb-movie-keywords-exploded",  "output/tmdb-movie-keywords-exploded",  {}),
+          ]
 
-      - name: Push SCL joined lexicon
-        run: |
-          kaggle datasets version \
-            -p output/scl-joined \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
-
-      - name: Push movie scores
-        run: |
-          kaggle datasets version \
-            -p output/tmdb-movie-scores \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
-
-      - name: Push movie keywords exploded
-        run: |
-          kaggle datasets version \
-            -p output/tmdb-movie-keywords-exploded \
-            -m "Pipeline run $(date +%Y-%m-%d)" \
-            --dir-mode zip
+          for slug, path, kwargs in datasets:
+              print(f"Uploading {slug} ...")
+              kagglehub.dataset_upload(
+                  handle=f"{user}/{slug}",
+                  local_dataset_dir=path,
+                  version_notes=notes,
+                  **kwargs,
+              )
+              print(f"  → kaggle.com/datasets/{user}/{slug}")
+          EOF
 
       # ── Commit executed notebooks back to repo ──────────────────────────
       - name: Commit executed notebooks
