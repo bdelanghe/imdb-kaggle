@@ -3,3 +3,7 @@ jupyter
 python-dotenv
 nltk
 aiohttp
+wordfreq
+plotly
+pandas
+nbconvert
