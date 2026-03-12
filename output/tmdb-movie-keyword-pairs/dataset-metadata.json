@@ -1,0 +1,6 @@
+{
+  "title": "TMDB Movie × Keyword Pairs",
+  "id": "bdelanghe/tmdb-movie-keyword-pairs",
+  "licenses": [{"name": "CC0-1.0"}],
+  "description": "Bipartite edge list: (tmdb_movie_id, tmdb_keyword_id). Derived from TMDB daily exports. 928K pairs, 282K movies, 59K keywords."
+}
